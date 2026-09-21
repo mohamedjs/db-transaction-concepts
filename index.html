@@ -238,8 +238,8 @@
             <a href="#acid" class="px-3.5 py-1.5 rounded-full clay-pill hover:text-purple-600 dark:hover:text-axLavender transition whitespace-nowrap" data-en="ACID" data-ar="خصائص ACID">ACID</a>
             <a href="#concurrency" class="px-3.5 py-1.5 rounded-full clay-pill hover:text-purple-600 dark:hover:text-axLavender transition whitespace-nowrap" data-en="Concurrency" data-ar="التزامن">Concurrency</a>
             <a href="#isolation" class="px-3.5 py-1.5 rounded-full clay-pill hover:text-purple-600 dark:hover:text-axLavender transition whitespace-nowrap" data-en="Isolation Levels" data-ar="مستويات العزل">Isolation Levels</a>
-            <a href="#locking-demo" class="px-3.5 py-1.5 rounded-full clay-btn-purple text-white transition whitespace-nowrap" data-en="Row vs Table Lock Animation" data-ar="محاكاة قفل الصف والجدول">Row vs Table Lock Animation</a>
-            <a href="#mvcc-demo" class="px-3.5 py-1.5 rounded-full clay-pill hover:text-purple-600 dark:hover:text-axLavender transition whitespace-nowrap" data-en="MVCC Animation" data-ar="محاكاة MVCC">MVCC Animation</a>
+            <a href="#locking-demo" class="px-3.5 py-1.5 rounded-full clay-btn-purple text-white transition whitespace-nowrap" data-en="2-Tx Concurrency Lab" data-ar="مختبر التزامن 2-Tx">2-Tx Concurrency Lab</a>
+            <a href="#matrices" class="px-3.5 py-1.5 rounded-full clay-pill hover:text-purple-600 dark:hover:text-axLavender transition whitespace-nowrap" data-en="Matrices & Trade-Offs" data-ar="المصفوفات والمقارنات">Matrices & Trade-Offs</a>
             <a href="#engines" class="px-3.5 py-1.5 rounded-full clay-pill hover:text-purple-600 dark:hover:text-axLavender transition whitespace-nowrap" data-en="Engines" data-ar="المحركات">Engines</a>
         </nav>
     </div>
@@ -725,253 +725,476 @@
             </div>
         </section>
 
-        <!-- SECTION 5: NEW INTERACTIVE ROW VS TABLE LOCK ANIMATION (TABLE CLOSING SHUTTERS) -->
+        <!-- SECTION 5: TWO-TRANSACTION CONCURRENCY & MVCC LAB -->
         <section id="locking-demo" class="space-y-8">
             <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-black/10 dark:border-white/10 pb-4">
                 <div>
-                    <div class="text-xs font-bold text-purple-600 dark:text-axLavender uppercase tracking-wider mb-1" data-en="Module 05 • Animated Locking Showcase" data-ar="الوحدة الخامسة • محاكاة الأقفال">Module 05 • Animated Locking Showcase</div>
-                    <h2 class="text-3xl font-black" style="color: var(--clay-text-primary)" data-en="Row-Level Lock vs Table Lock Animation" data-ar="محاكاة قفل الصف مقابل قفل الجدول بالكامل">Row-Level Lock vs Table Lock Animation</h2>
+                    <div class="text-xs font-bold text-purple-600 dark:text-axLavender uppercase tracking-wider mb-1" data-en="Module 05 • Interactive Concurrency Lab" data-ar="الوحدة الخامسة • مختبر التزامن التفاعلي">Module 05 • Interactive Concurrency Lab</div>
+                    <h2 class="text-3xl font-black" style="color: var(--clay-text-primary)" data-en="Two-Transaction Concurrency Lab: Locks vs MVCC" data-ar="مختبر التزامن بين معاملتين: الأقفال مقابل MVCC">Two-Transaction Concurrency Lab: Locks vs MVCC</h2>
                 </div>
-                <p class="text-sm max-w-md" style="color: var(--clay-text-secondary)" data-en="Watch how an entire table closes and blocks all transactions during a Table Lock, compared to row-level concurrency." data-ar="شاهد كيف يتم إغلاق الجدول بأكمله وحجب المعاملات أثناء قفل الجدول مقارنة بقفل الصف.">
-                    Watch how an entire table closes and blocks all transactions during a Table Lock, compared to row-level concurrency.
+                <p class="text-sm max-w-md" style="color: var(--clay-text-secondary)" data-en="Run Transaction T1 and T2 concurrently on a live database table. Watch row-level locks, table closures, and multi-version snapshots with data consistency guarantees." data-ar="قم بتشغيل المعاملتين T1 و T2 معاً على جدول بيانات حي. شاهد قفل الصف، إغلاق الجدول، ونسخ MVCC مع ضمانات اتساق البيانات.">
+                    Run Transaction T1 and T2 concurrently on a live database table. Watch row-level locks, table closures, and multi-version snapshots with data consistency guarantees.
                 </p>
             </div>
 
-            <!-- Lock Mode Showcase Buttons -->
-            <div class="flex flex-wrap items-center gap-3">
-                <button onclick="setLockDemoMode('table-x')" id="btnLockMode-table-x" class="clay-btn-purple px-5 py-2.5 text-xs font-bold flex items-center gap-2">
-                    <span>1. Table Exclusive Lock (Table Closes Shut 🔒)</span>
-                </button>
-                <button onclick="setLockDemoMode('row-x')" id="btnLockMode-row-x" class="clay-btn-neutral px-5 py-2.5 text-xs font-bold flex items-center gap-2">
-                    <span>2. Row Exclusive Lock (Only Row 1 Clamped)</span>
-                </button>
-                <button onclick="setLockDemoMode('row-s')" id="btnLockMode-row-s" class="clay-btn-neutral px-5 py-2.5 text-xs font-bold flex items-center gap-2">
-                    <span>3. Row Shared Lock (Multiple Readers Allowed 📖)</span>
-                </button>
-                <button onclick="setLockDemoMode('unlocked')" id="btnLockMode-unlocked" class="clay-btn-neutral px-5 py-2.5 text-xs font-bold">
-                    <span>Reset / Unlocked</span>
-                </button>
-            </div>
-
-            <!-- Big Visual Animated Table Canvas -->
-            <div class="clay-card p-6 sm:p-10 space-y-6 relative overflow-hidden">
-                <div class="flex items-center justify-between flex-wrap gap-4 pb-4 border-b border-black/5 dark:border-white/10">
-                    <div>
-                        <div class="text-xs font-mono font-bold text-purple-600 dark:text-axLavender" id="lockDemoHeaderLabel">MODE: Table-Level Exclusive Lock (Table Closed)</div>
-                        <div class="text-xs text-slate-400 mt-1" id="lockDemoHeaderDesc">Transaction T1 executed LOCK TABLES accounts WRITE. The whole table is closed!</div>
+            <!-- Lab Card Container -->
+            <div class="clay-card p-6 sm:p-10 space-y-8 relative overflow-hidden">
+                
+                <!-- Architecture & Scenario Selectors Bar -->
+                <div class="space-y-4 pb-6 border-b border-black/5 dark:border-white/10">
+                    <!-- Row 1: Concurrency Architecture -->
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-axLavender" data-en="1. Concurrency Architecture:" data-ar="1. معمارية التحكم بالتزامن:">1. Concurrency Architecture:</span>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button onclick="setLabArch('row')" id="btnLabArch-row" class="clay-btn-purple px-4 py-2 text-xs font-bold flex items-center gap-1.5 transition">
+                                <span>🔒</span>
+                                <span data-en="Row-Level Lock (2PL: Shared & Exclusive)" data-ar="قفل على مستوى الصف (2PL: مشترك وحصري)">Row-Level Lock (2PL: Shared & Exclusive)</span>
+                            </button>
+                            <button onclick="setLabArch('table')" id="btnLabArch-table" class="clay-btn-neutral px-4 py-2 text-xs font-bold flex items-center gap-1.5 transition">
+                                <span>🏢</span>
+                                <span data-en="Table-Level Lock (Table Closes Shut 🔒)" data-ar="قفل على مستوى الجدول (إغلاق الجدول بالكامل 🔒)">Table-Level Lock (Table Closes Shut 🔒)</span>
+                            </button>
+                            <button onclick="setLabArch('mvcc')" id="btnLabArch-mvcc" class="clay-btn-neutral px-4 py-2 text-xs font-bold flex items-center gap-1.5 transition">
+                                <span>⚡</span>
+                                <span data-en="MVCC Snapshot Engine (Multi-Versioning)" data-ar="محرك النسخ المتعددة MVCC (لقطات الذاكرة)">MVCC Snapshot Engine (Multi-Versioning)</span>
+                            </button>
+                        </div>
                     </div>
-                    <button onclick="testIncomingT2Transaction()" class="clay-btn-purple px-5 py-2 text-xs font-bold flex items-center gap-2">
-                        <span>▶ Send Transaction T2 to Access Row 2</span>
-                    </button>
+
+                    <!-- Row 2: Scenario Selector -->
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400" data-en="2. Transaction Scenario:" data-ar="2. سيناريو المعاملات:">2. Transaction Scenario:</span>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button onclick="setLabScenario('s1')" id="btnLabScen-s1" class="clay-btn-purple px-3.5 py-1.5 text-xs font-bold transition">
+                                <span data-en="Scenario 1: Read-Write Conflict (T1 Writes Row 1 ✕ T2 Reads Row 1)" data-ar="السيناريو 1: تعارض قراءة وكتابة (T1 تكتب الصف 1 ✕ T2 تقرأ الصف 1)">Scenario 1: Read-Write Conflict (T1 Writes Row 1 ✕ T2 Reads Row 1)</span>
+                            </button>
+                            <button onclick="setLabScenario('s2')" id="btnLabScen-s2" class="clay-btn-neutral px-3.5 py-1.5 text-xs font-bold transition">
+                                <span data-en="Scenario 2: Disjoint Row Writes (T1 Writes Row 1 ✕ T2 Writes Row 2)" data-ar="السيناريو 2: كتابة في صفوف مختلفة (T1 تكتب الصف 1 ✕ T2 تكتب الصف 2)">Scenario 2: Disjoint Row Writes (T1 Writes Row 1 ✕ T2 Writes Row 2)</span>
+                            </button>
+                            <button onclick="setLabScenario('s3')" id="btnLabScen-s3" class="clay-btn-neutral px-3.5 py-1.5 text-xs font-bold transition">
+                                <span data-en="Scenario 3: Concurrent Reads (T1 Reads Row 1 ✕ T2 Reads Row 1)" data-ar="السيناريو 3: قراءة متزامنة (T1 تقرأ الصف 1 ✕ T2 تقرأ الصف 1)">Scenario 3: Concurrent Reads (T1 Reads Row 1 ✕ T2 Reads Row 1)</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Database Table Container -->
-                <div class="relative clay-inset p-6 rounded-3xl min-h-[320px] flex flex-col justify-center">
-                    
-                    <!-- Heavy Metal Table Shutter Overlay (Closes the entire table during Table Lock) -->
-                    <div id="tableShutterOverlay" class="table-shutter closed absolute inset-0 z-30 bg-slate-900/90 backdrop-blur-md rounded-3xl border-4 border-red-500/80 flex flex-col items-center justify-center text-center p-6 space-y-3">
-                        <div class="w-16 h-16 rounded-3xl clay-card bg-red-600/20 border border-red-500 flex items-center justify-center text-3xl animate-bounce">
-                            🔒
-                        </div>
-                        <div class="text-red-400 font-black text-xl font-mono uppercase tracking-wider">TABLE-LEVEL EXCLUSIVE LOCK ACTIVE</div>
-                        <p class="text-xs text-slate-300 max-w-md">The entire table is completely clamped shut by Transaction T1. No transaction can READ or WRITE any row in this table!</p>
-                        <div class="px-4 py-1.5 rounded-full clay-pill text-xs text-amber-400 font-mono font-bold">All incoming transactions queued in wait-queue ⏳</div>
+                <!-- Playback & Stepper Control Toolbar -->
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl clay-inset">
+                    <!-- Buttons -->
+                    <div class="flex items-center gap-2">
+                        <button onclick="labPrevStep()" class="clay-btn-neutral px-3.5 py-1.5 text-xs font-bold transition" title="Previous Step">⏮ Prev</button>
+                        <button onclick="toggleLabAutoPlay()" id="btnLabAutoPlay" class="clay-btn-purple px-4 py-1.5 text-xs font-bold flex items-center gap-1.5 transition">
+                            <span id="labAutoPlayIcon">▶</span>
+                            <span id="labAutoPlayText">Play Animation</span>
+                        </button>
+                        <button onclick="labNextStep()" class="clay-btn-neutral px-3.5 py-1.5 text-xs font-bold transition" title="Next Step">Next ⏭</button>
+                        <button onclick="resetLab()" class="clay-btn-neutral px-3 py-1.5 text-xs font-bold transition" title="Reset to Start">↺ Reset</button>
                     </div>
 
-                    <!-- Database Rows -->
-                    <div class="space-y-3 z-10">
-                        <div class="flex items-center justify-between text-[11px] font-mono font-bold text-slate-400 px-4">
-                            <span>ROW ID & NAME</span>
-                            <span>BALANCE</span>
-                            <span>CURRENT LOCK STATE</span>
-                        </div>
-
-                        <!-- Row 1 -->
-                        <div id="animRow1" class="p-4 rounded-2xl clay-card flex items-center justify-between transition-all duration-300">
-                            <div class="flex items-center gap-3">
-                                <span class="w-8 h-8 rounded-xl clay-pill flex items-center justify-center font-bold text-xs">#1</span>
-                                <div>
-                                    <div class="font-bold text-sm" style="color: var(--clay-text-primary)">Alice Johnson</div>
-                                    <div class="text-[10px] text-slate-400 font-mono">ID: 101</div>
-                                </div>
-                            </div>
-                            <div class="font-mono font-bold text-emerald-500 text-sm">$1,000.00</div>
-                            <div id="animRow1Badge" class="px-3 py-1 rounded-full clay-pill text-xs font-mono font-bold">Open</div>
-                        </div>
-
-                        <!-- Row 2 -->
-                        <div id="animRow2" class="p-4 rounded-2xl clay-card flex items-center justify-between transition-all duration-300">
-                            <div class="flex items-center gap-3">
-                                <span class="w-8 h-8 rounded-xl clay-pill flex items-center justify-center font-bold text-xs">#2</span>
-                                <div>
-                                    <div class="font-bold text-sm" style="color: var(--clay-text-primary)">Bob Smith</div>
-                                    <div class="text-[10px] text-slate-400 font-mono">ID: 102</div>
-                                </div>
-                            </div>
-                            <div class="font-mono font-bold text-cyan-500 text-sm">$500.00</div>
-                            <div id="animRow2Badge" class="px-3 py-1 rounded-full clay-pill text-xs font-mono font-bold">Open</div>
-                        </div>
-
-                        <!-- Row 3 -->
-                        <div id="animRow3" class="p-4 rounded-2xl clay-card flex items-center justify-between transition-all duration-300">
-                            <div class="flex items-center gap-3">
-                                <span class="w-8 h-8 rounded-xl clay-pill flex items-center justify-center font-bold text-xs">#3</span>
-                                <div>
-                                    <div class="font-bold text-sm" style="color: var(--clay-text-primary)">Charlie Davis</div>
-                                    <div class="text-[10px] text-slate-400 font-mono">ID: 103</div>
-                                </div>
-                            </div>
-                            <div class="font-mono font-bold text-purple-500 text-sm">$750.00</div>
-                            <div id="animRow3Badge" class="px-3 py-1 rounded-full clay-pill text-xs font-mono font-bold">Open</div>
-                        </div>
+                    <!-- Step Pills Indicator -->
+                    <div class="flex items-center gap-1.5 overflow-x-auto text-xs no-scrollbar">
+                        <button onclick="goLabStep(0)" id="stepDot-0" class="px-2.5 py-1 rounded-full text-[11px] font-bold font-mono clay-btn-purple">0: Start</button>
+                        <button onclick="goLabStep(1)" id="stepDot-1" class="px-2.5 py-1 rounded-full text-[11px] font-bold font-mono clay-pill text-slate-400">1: T1 Operates</button>
+                        <button onclick="goLabStep(2)" id="stepDot-2" class="px-2.5 py-1 rounded-full text-[11px] font-bold font-mono clay-pill text-slate-400">2: T2 Intervenes</button>
+                        <button onclick="goLabStep(3)" id="stepDot-3" class="px-2.5 py-1 rounded-full text-[11px] font-bold font-mono clay-pill text-slate-400">3: Conflict Check</button>
+                        <button onclick="goLabStep(4)" id="stepDot-4" class="px-2.5 py-1 rounded-full text-[11px] font-bold font-mono clay-pill text-slate-400">4: T1 Commit</button>
+                        <button onclick="goLabStep(5)" id="stepDot-5" class="px-2.5 py-1 rounded-full text-[11px] font-bold font-mono clay-pill text-slate-400">5: Done</button>
                     </div>
-
                 </div>
 
-                <!-- Simulation Event Log Banner -->
-                <div id="lockDemoEventLog" class="p-4 rounded-2xl clay-card flex items-center justify-between flex-wrap gap-4 text-xs">
-                    <div class="flex items-center gap-3">
-                        <span class="text-xl">ℹ️</span>
+                <!-- Active Step Description Banner -->
+                <div id="labStepDescBanner" class="p-3.5 rounded-xl clay-card border border-purple-500/30 text-xs flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-2">
+                        <span class="text-base" id="labStepBannerIcon">ℹ️</span>
                         <div>
-                            <span class="font-bold" style="color: var(--clay-text-primary)">Status:</span>
-                            <span id="lockDemoEventText" class="text-slate-400 ml-1">Table Lock active. Click "Send Transaction T2" to see what happens when T2 tries to access Row 2.</span>
+                            <span class="font-bold text-purple-600 dark:text-axLavender" id="labStepBannerTitle">Step 0: Initial State</span>
+                            <span class="text-slate-400 ml-1.5" id="labStepBannerText">Database table is idle with committed balances. Click "Next ⏭" or "Play Animation ▶" to begin.</span>
                         </div>
+                    </div>
+                    <span id="labStepCounterBadge" class="px-2.5 py-1 rounded-full clay-pill text-[11px] font-mono font-bold text-slate-400 shrink-0">Step 0/5</span>
+                </div>
+
+                <!-- 3-COLUMN DUAL-TRANSACTION & LIVE TABLE STAGE -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    
+                    <!-- COLUMN 1: TRANSACTION T1 (3 cols) -->
+                    <div class="lg:col-span-3 p-5 rounded-3xl clay-card space-y-4 border border-purple-500/20">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="w-7 h-7 rounded-xl clay-btn-purple flex items-center justify-center text-xs font-bold">T1</span>
+                                <div>
+                                    <div class="font-bold text-xs" style="color: var(--clay-text-primary)">Transaction T1</div>
+                                    <div class="text-[10px] text-slate-400 font-mono">Client A • TxID: 105</div>
+                                </div>
+                            </div>
+                            <span id="t1StatusBadge" class="px-2.5 py-0.5 rounded-full clay-pill text-[10px] font-mono font-bold text-slate-400">IDLE</span>
+                        </div>
+
+                        <!-- T1 SQL Steps Code Box -->
+                        <div class="rounded-2xl clay-inset p-3 space-y-2 font-mono text-[11px]" id="t1CodeBox">
+                            <div id="t1Line-1" class="p-2 rounded-xl transition-all duration-200 flex items-center justify-between opacity-50">
+                                <span><span class="text-slate-500 mr-1.5">1</span><span class="text-purple-400 font-bold">BEGIN;</span></span>
+                                <span id="t1Check-1" class="text-xs"></span>
+                            </div>
+                            <div id="t1Line-2" class="p-2 rounded-xl transition-all duration-200 flex items-center justify-between opacity-50">
+                                <span id="t1CodeText-2"><span class="text-slate-500 mr-1.5">2</span>UPDATE accounts...</span>
+                                <span id="t1Check-2" class="text-xs"></span>
+                            </div>
+                            <div id="t1Line-3" class="p-2 rounded-xl transition-all duration-200 flex items-center justify-between opacity-50">
+                                <span id="t1CodeText-3"><span class="text-slate-500 mr-1.5">3</span>SELECT balance...</span>
+                                <span id="t1Check-3" class="text-xs"></span>
+                            </div>
+                            <div id="t1Line-4" class="p-2 rounded-xl transition-all duration-200 flex items-center justify-between opacity-50">
+                                <span><span class="text-slate-500 mr-1.5">4</span><span class="text-emerald-400 font-bold">COMMIT;</span></span>
+                                <span id="t1Check-4" class="text-xs"></span>
+                            </div>
+                        </div>
+
+                        <!-- T1 Internal Diagnostics Card -->
+                        <div class="p-3 rounded-xl clay-card text-[11px] space-y-1" style="color: var(--clay-text-secondary)">
+                            <div class="flex justify-between font-mono"><span class="text-slate-400">Held Locks:</span> <span id="t1HeldLocksText" class="font-bold text-purple-500">None</span></div>
+                            <div class="flex justify-between font-mono"><span class="text-slate-400">Isolation:</span> <span class="font-bold">Read Committed</span></div>
+                        </div>
+                    </div>
+
+                    <!-- COLUMN 2: LIVE DATABASE TABLE: accounts (6 cols) -->
+                    <div class="lg:col-span-6 p-5 rounded-3xl clay-card space-y-4 relative overflow-hidden border border-black/5 dark:border-white/10">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="text-base">🗄️</span>
+                                <div>
+                                    <div class="font-bold text-xs" style="color: var(--clay-text-primary)">Database Table: accounts</div>
+                                    <div class="text-[10px] text-slate-400 font-mono">Buffer Pool & Physical Storage</div>
+                                </div>
+                            </div>
+                            <span id="tableModeIndicatorBadge" class="px-2.5 py-0.5 rounded-full clay-pill text-[10px] font-mono font-bold text-purple-500">Row-Level (2PL)</span>
+                        </div>
+
+                        <!-- Heavy Metal Table Shutter Overlay (Used in Table Lock Mode) -->
+                        <div id="tableShutterOverlay" class="table-shutter open absolute inset-0 z-30 bg-slate-900/90 backdrop-blur-md rounded-3xl border-4 border-red-500/80 flex flex-col items-center justify-center text-center p-6 space-y-3 pointer-events-none opacity-0">
+                            <div class="w-14 h-14 rounded-2xl clay-card bg-red-600/20 border border-red-500 flex items-center justify-center text-3xl animate-bounce">
+                                🔒
+                            </div>
+                            <div class="text-red-400 font-black text-lg font-mono uppercase tracking-wider">TABLE-LEVEL EXCLUSIVE LOCK ACTIVE</div>
+                            <p class="text-xs text-slate-300 max-w-sm">The entire table shutter is closed by Transaction T1! Incoming transactions (T2) are blocked at the gates, even if accessing a different row!</p>
+                            <div class="px-3 py-1 rounded-full clay-pill text-xs text-amber-400 font-mono font-bold">⛔ T2 Thread Queued in Table Lock Wait-List</div>
+                        </div>
+
+                        <!-- Table Records -->
+                        <div class="space-y-3 relative z-10">
+                            <div class="flex items-center justify-between text-[10px] font-mono font-bold text-slate-400 px-3">
+                                <span>ROW & ACCOUNT HOLDER</span>
+                                <span>BALANCE</span>
+                                <span>CURRENT LOCK / MVCC VERSION</span>
+                            </div>
+
+                            <!-- Row 1: Alice Johnson -->
+                            <div id="labRow1" class="p-3.5 rounded-2xl clay-card transition-all duration-300 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2.5">
+                                        <span class="w-7 h-7 rounded-xl clay-pill flex items-center justify-center font-bold text-xs">#1</span>
+                                        <div>
+                                            <div class="font-bold text-xs" style="color: var(--clay-text-primary)">Alice Johnson</div>
+                                            <div class="text-[10px] text-slate-400 font-mono">ID: 101</div>
+                                        </div>
+                                    </div>
+                                    <div class="font-mono font-bold text-emerald-500 text-sm" id="labRow1Balance">$1,000.00</div>
+                                    <div id="labRow1Badge" class="px-2.5 py-1 rounded-full clay-pill text-[10px] font-mono font-bold text-slate-400">Open</div>
+                                </div>
+                                <!-- MVCC Version Stack Sub-Box (Only active in MVCC mode) -->
+                                <div id="labRow1MvccBox" class="hidden pt-2 border-t border-black/5 dark:border-white/10 text-[10px] space-y-1.5 font-mono">
+                                    <div class="flex items-center justify-between">
+                                        <span id="mvccV1Tag" class="px-2 py-0.5 rounded-lg clay-inset text-slate-300">V1: $1,000.00 (xmin: 100, Committed)</span>
+                                        <span id="mvccT2ReadIndicator" class="hidden text-emerald-400 font-bold animate-pulse">👉 T2 Reading V1 Snapshot</span>
+                                    </div>
+                                    <div id="mvccV2Row" class="hidden flex items-center justify-between">
+                                        <span id="mvccV2Tag" class="px-2 py-0.5 rounded-lg clay-card text-purple-400 border border-purple-500/50">V2: $800.00 (xmin: 105, Undo Log)</span>
+                                        <span class="text-purple-400 font-bold text-[9px]">T1 Writing ➔</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Row 2: Bob Smith -->
+                            <div id="labRow2" class="p-3.5 rounded-2xl clay-card transition-all duration-300 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2.5">
+                                        <span class="w-7 h-7 rounded-xl clay-pill flex items-center justify-center font-bold text-xs">#2</span>
+                                        <div>
+                                            <div class="font-bold text-xs" style="color: var(--clay-text-primary)">Bob Smith</div>
+                                            <div class="text-[10px] text-slate-400 font-mono">ID: 102</div>
+                                        </div>
+                                    </div>
+                                    <div class="font-mono font-bold text-cyan-500 text-sm" id="labRow2Balance">$500.00</div>
+                                    <div id="labRow2Badge" class="px-2.5 py-1 rounded-full clay-pill text-[10px] font-mono font-bold text-slate-400">Open</div>
+                                </div>
+                                <div id="labRow2MvccBox" class="hidden pt-2 border-t border-black/5 dark:border-white/10 text-[10px] space-y-1.5 font-mono">
+                                    <div class="flex items-center justify-between">
+                                        <span id="mvccRow2V1Tag" class="px-2 py-0.5 rounded-lg clay-inset text-slate-300">V1: $500.00 (xmin: 90, Committed)</span>
+                                        <span id="mvccRow2T2ReadIndicator" class="hidden text-cyan-400 font-bold">👉 T2 Read Granted</span>
+                                    </div>
+                                    <div id="mvccRow2V2Row" class="hidden flex items-center justify-between">
+                                        <span id="mvccRow2V2Tag" class="px-2 py-0.5 rounded-lg clay-card text-cyan-400 border border-cyan-500/50">V2: $600.00 (xmin: 106, Undo Log)</span>
+                                        <span class="text-cyan-400 font-bold text-[9px]">T2 Writing ➔</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Row 3: Charlie Davis -->
+                            <div id="labRow3" class="p-3.5 rounded-2xl clay-card transition-all duration-300 flex items-center justify-between">
+                                <div class="flex items-center gap-2.5">
+                                    <span class="w-7 h-7 rounded-xl clay-pill flex items-center justify-center font-bold text-xs">#3</span>
+                                    <div>
+                                        <div class="font-bold text-xs" style="color: var(--clay-text-primary)">Charlie Davis</div>
+                                        <div class="text-[10px] text-slate-400 font-mono">ID: 103</div>
+                                    </div>
+                                </div>
+                                <div class="font-mono font-bold text-purple-500 text-sm">$750.00</div>
+                                <div id="labRow3Badge" class="px-2.5 py-1 rounded-full clay-pill text-[10px] font-mono font-bold text-slate-400">Open</div>
+                            </div>
+                        </div>
+
+                        <!-- Live Concurrency Summary Pill -->
+                        <div class="pt-2 flex items-center justify-between text-[11px] font-mono text-slate-400 px-1 border-t border-black/5 dark:border-white/10">
+                            <span>Conflict Status: <span id="labConflictStatusText" class="font-bold text-emerald-500">None</span></span>
+                            <span>Throughput: <span id="labThroughputText" class="font-bold text-purple-500">100% (Concurrent)</span></span>
+                        </div>
+                    </div>
+
+                    <!-- COLUMN 3: TRANSACTION T2 (3 cols) -->
+                    <div class="lg:col-span-3 p-5 rounded-3xl clay-card space-y-4 border border-cyan-500/20">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="w-7 h-7 rounded-xl clay-btn-neutral flex items-center justify-center text-xs font-bold text-cyan-500">T2</span>
+                                <div>
+                                    <div class="font-bold text-xs" style="color: var(--clay-text-primary)">Transaction T2</div>
+                                    <div class="text-[10px] text-slate-400 font-mono">Client B • TxID: 106</div>
+                                </div>
+                            </div>
+                            <span id="t2StatusBadge" class="px-2.5 py-0.5 rounded-full clay-pill text-[10px] font-mono font-bold text-slate-400">IDLE</span>
+                        </div>
+
+                        <!-- T2 SQL Steps Code Box -->
+                        <div class="rounded-2xl clay-inset p-3 space-y-2 font-mono text-[11px]" id="t2CodeBox">
+                            <div id="t2Line-1" class="p-2 rounded-xl transition-all duration-200 flex items-center justify-between opacity-50">
+                                <span><span class="text-slate-500 mr-1.5">1</span><span class="text-cyan-400 font-bold">BEGIN;</span></span>
+                                <span id="t2Check-1" class="text-xs"></span>
+                            </div>
+                            <div id="t2Line-2" class="p-2 rounded-xl transition-all duration-200 flex items-center justify-between opacity-50">
+                                <span id="t2CodeText-2"><span class="text-slate-500 mr-1.5">2</span>SELECT balance...</span>
+                                <span id="t2Check-2" class="text-xs"></span>
+                            </div>
+                            <div id="t2Line-3" class="p-2 rounded-xl transition-all duration-200 flex items-center justify-between opacity-50">
+                                <span id="t2CodeText-3"><span class="text-slate-500 mr-1.5">3</span>SELECT balance...</span>
+                                <span id="t2Check-3" class="text-xs"></span>
+                            </div>
+                            <div id="t2Line-4" class="p-2 rounded-xl transition-all duration-200 flex items-center justify-between opacity-50">
+                                <span><span class="text-slate-500 mr-1.5">4</span><span class="text-emerald-400 font-bold">COMMIT;</span></span>
+                                <span id="t2Check-4" class="text-xs"></span>
+                            </div>
+                        </div>
+
+                        <!-- T2 Latency & Wait Meter -->
+                        <div class="p-3 rounded-xl clay-card text-[11px] space-y-1" style="color: var(--clay-text-secondary)">
+                            <div class="flex justify-between font-mono"><span class="text-slate-400">Wait Delay:</span> <span id="t2LatencyText" class="font-bold text-emerald-500">0ms</span></div>
+                            <div class="flex justify-between font-mono"><span class="text-slate-400">Lock State:</span> <span id="t2LockStateText" class="font-bold text-slate-400">None</span></div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- DBMS KERNEL & LOCK MANAGER DIAGNOSTIC CONSOLE -->
+                <div class="rounded-2xl clay-inset p-4 space-y-2">
+                    <div class="flex items-center justify-between pb-2 border-b border-white/5">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span class="text-[11px] font-mono font-bold text-purple-400 uppercase tracking-wider">DBMS Kernel & Lock Manager Event Console</span>
+                        </div>
+                        <span class="text-[10px] text-slate-500 font-mono">Engine: PostgreSQL / InnoDB Internals</span>
+                    </div>
+                    <div id="labEngineConsole" class="font-mono text-xs space-y-1.5 min-h-[70px] max-h-36 overflow-y-auto text-slate-300">
+                        <div class="text-slate-500">[SYSTEM] Concurrency Lab initialized. Select architecture and scenario above to inspect state transitions.</div>
                     </div>
                 </div>
 
-                <!-- Compatibility Tables Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-black/5 dark:border-white/10 text-xs">
-                    <div class="p-5 rounded-2xl clay-inset space-y-3">
-                        <div class="font-bold text-purple-600 dark:text-axLavender">Lock Compatibility Matrix (S vs X)</div>
-                        <table class="w-full text-left rtl:text-right text-xs">
-                            <tr class="border-b border-white/10 text-slate-400"><th class="pb-1.5">Held \ Requested</th><th class="pb-1.5">Shared (S)</th><th class="pb-1.5">Exclusive (X)</th></tr>
-                            <tr><td class="py-2 font-bold">Shared (S)</td><td class="text-emerald-500 font-bold">✅ Granted</td><td class="text-red-500 font-bold">⏳ Blocked</td></tr>
-                            <tr><td class="py-2 font-bold">Exclusive (X)</td><td class="text-red-500 font-bold">⏳ Blocked</td><td class="text-red-500 font-bold">⏳ Blocked</td></tr>
-                        </table>
+                <!-- HOW DATA CONSISTENCY IS PRESERVED (حفظ اتساق البيانات) -->
+                <div class="space-y-4 pt-4 border-t border-black/5 dark:border-white/10">
+                    <div class="flex items-center gap-2">
+                        <span class="text-lg">🛡️</span>
+                        <div>
+                            <h4 class="text-base font-bold" style="color: var(--clay-text-primary)" data-en="How Data Consistency is Preserved in this Mode" data-ar="كيف يتم الحفاظ على اتساق البيانات (Consistency) في هذا النمط">How Data Consistency is Preserved in this Mode</h4>
+                            <p class="text-xs text-slate-400" data-en="ACID guarantees, anomaly prevention mechanisms, and architectural trade-offs." data-ar="ضمانات ACID، آليات منع تشوهات البيانات، والتنازلات المعمارية.">ACID guarantees, anomaly prevention mechanisms, and architectural trade-offs.</p>
+                        </div>
                     </div>
 
-                    <div class="p-5 rounded-2xl clay-inset space-y-3">
-                        <div class="font-bold text-cyan-500">Row vs Table Granularity Matrix</div>
-                        <table class="w-full text-left rtl:text-right text-xs">
-                            <tr class="border-b border-white/10 text-slate-400"><th class="pb-1.5">T1 Held</th><th class="pb-1.5">T2 Request</th><th class="pb-1.5">Outcome</th></tr>
-                            <tr><td class="py-1.5 font-mono">Row 1 (X)</td><td class="font-mono">Row 2 (X)</td><td class="text-emerald-500 font-bold">✅ Granted (Different rows)</td></tr>
-                            <tr><td class="py-1.5 font-mono">Row 1 (X)</td><td class="font-mono">Row 1 (X)</td><td class="text-red-500 font-bold">⏳ Blocked (Same row)</td></tr>
-                            <tr><td class="py-1.5 font-mono">Row 1 (X)</td><td class="font-mono">Table (X)</td><td class="text-red-500 font-bold">⏳ Blocked (Intent lock)</td></tr>
-                        </table>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                        <!-- Consistency Guarantee Mechanism -->
+                        <div class="p-4 rounded-2xl clay-card space-y-2 border border-purple-500/20">
+                            <div class="font-bold text-purple-600 dark:text-axLavender flex items-center gap-1.5">
+                                <span>⚖️</span>
+                                <span data-en="Consistency Mechanism" data-ar="آلية الاتساق">Consistency Mechanism</span>
+                            </div>
+                            <p id="consistMechText" class="leading-relaxed text-slate-400">
+                                Row-level locking uses Strict Two-Phase Locking (2PL). Conflicting transactions queue up, ensuring strict conflict serializability.
+                            </p>
+                        </div>
+
+                        <!-- Anomalies Prevented -->
+                        <div class="p-4 rounded-2xl clay-card space-y-2 border border-emerald-500/20">
+                            <div class="font-bold text-emerald-500 flex items-center gap-1.5">
+                                <span>🚫</span>
+                                <span data-en="Anomalies Prevented" data-ar="المشاكل الممنوعة">Anomalies Prevented</span>
+                            </div>
+                            <p id="consistAnomText" class="leading-relaxed text-slate-400">
+                                Prevents Dirty Reads (G1) and Lost Updates (P4). T2 cannot observe T1's modified balance until T1 issues a durable COMMIT.
+                            </p>
+                        </div>
+
+                        <!-- Concurrency Trade-Off -->
+                        <div class="p-4 rounded-2xl clay-card space-y-2 border border-cyan-500/20">
+                            <div class="font-bold text-cyan-500 flex items-center gap-1.5">
+                                <span>⚡</span>
+                                <span data-en="Throughput vs Trade-Off" data-ar="السرعة مقابل التنازلات">Throughput vs Trade-Off</span>
+                            </div>
+                            <p id="consistTradeText" class="leading-relaxed text-slate-400">
+                                Disjoint rows run in parallel with 0 delay. Only transactions contending for the exact same row experience lock-wait latency.
+                            </p>
+                        </div>
                     </div>
                 </div>
 
             </div>
         </section>
 
-        <!-- SECTION 6: NEW INTERACTIVE MVCC ANIMATION (MULTI-VERSION TABLE) -->
-        <section id="mvcc-demo" class="space-y-8">
+        <!-- SECTION 6: ARCHITECTURAL MATRICES & COMPARISON -->
+        <section id="matrices" class="space-y-8">
             <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-black/10 dark:border-white/10 pb-4">
                 <div>
-                    <div class="text-xs font-bold text-purple-600 dark:text-axLavender uppercase tracking-wider mb-1" data-en="Module 06 • Optimistic MVCC Engine" data-ar="الوحدة السادسة • محرك MVCC">Module 06 • Optimistic MVCC Engine</div>
-                    <h2 class="text-3xl font-black" style="color: var(--clay-text-primary)" data-en="Multi-Version Concurrency Control (MVCC) Animation" data-ar="محاكاة تعدد النسخ MVCC">Multi-Version Concurrency Control (MVCC) Animation</h2>
+                    <div class="text-xs font-bold text-purple-600 dark:text-axLavender uppercase tracking-wider mb-1" data-en="Module 06 • Architectural Reference" data-ar="الوحدة السادسة • المرجع المعماري">Module 06 • Architectural Reference</div>
+                    <h2 class="text-3xl font-black" style="color: var(--clay-text-primary)" data-en="Lock Compatibility & MVCC Trade-Offs" data-ar="مصفوفة توافق الأقفال ومقارنة MVCC">Lock Compatibility & MVCC Trade-Offs</h2>
                 </div>
-                <p class="text-sm max-w-md" style="color: var(--clay-text-secondary)" data-en="Why modern databases never close tables for readers: Readers never block writers, and writers never block readers." data-ar="لماذا لا تغلق قواعد البيانات الحديثة الجداول للقراء: القراءة لا تعطل الكتابة، والكتابة لا تعطل القراءة.">
-                    Why modern databases never close tables for readers: Readers never block writers, and writers never block readers.
+                <p class="text-sm max-w-md" style="color: var(--clay-text-secondary)" data-en="Engineering reference matrices for lock compatibility, granularity conflicts, and pessimistic vs optimistic trade-offs." data-ar="مرجع هندسي لمصفوفات توافق الأقفال، وتعارض المستويات، ومقارنة الأقفال مع تعدد النسخ.">
+                    Engineering reference matrices for lock compatibility, granularity conflicts, and pessimistic vs optimistic trade-offs.
                 </p>
             </div>
 
-            <!-- MVCC vs Locking Comparison Showcase -->
-            <div class="clay-card p-6 sm:p-10 space-y-8">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-black/5 dark:border-white/10">
-                    <div>
-                        <span class="text-xs font-mono font-bold px-3 py-1 rounded-full clay-pill text-cyan-500">LIVE TRANSACTION ANIMATION</span>
-                        <h3 class="text-xl font-bold mt-1" style="color: var(--clay-text-primary)">Side-by-Side: Pessimistic Locking vs MVCC Snapshot</h3>
-                        <p class="text-xs text-slate-400 mt-0.5">Watch T1 write while T2 reads at the exact same millisecond:</p>
+            <!-- Matrices Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Lock Compatibility Matrix (S vs X) -->
+                <div class="p-6 rounded-3xl clay-card space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-mono font-bold text-purple-600 dark:text-axLavender">LOCK COMPATIBILITY MATRIX</span>
+                        <span class="text-xs px-2.5 py-0.5 rounded-full clay-pill text-slate-400 font-bold">S vs X</span>
                     </div>
-                    <button onclick="runMvccComparisonAnim()" class="clay-btn-purple px-6 py-2.5 text-xs font-bold flex items-center gap-2">
-                        <span>▶ Play Side-by-Side Animation</span>
-                    </button>
-                </div>
-
-                <!-- 2 Comparison Pillars -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <!-- Traditional Locking -->
-                    <div class="p-6 rounded-3xl clay-inset space-y-4">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-mono font-bold text-red-500">1. TRADITIONAL LOCKING</span>
-                            <span id="lockAnimBadge" class="text-xs px-2.5 py-0.5 rounded-full clay-pill text-slate-400 font-bold">Idle</span>
-                        </div>
-                        <div class="h-40 flex flex-col justify-center items-center text-center space-y-2">
-                            <div id="lockAnimT1" class="text-xs font-mono font-bold text-purple-500">T1: Idle</div>
-                            <div id="lockAnimDoor" class="w-16 h-16 rounded-2xl clay-card flex items-center justify-center text-2xl transition-all duration-300">
-                                🔓
-                            </div>
-                            <div id="lockAnimT2" class="text-xs font-mono font-bold text-cyan-500">T2: Idle</div>
-                        </div>
-                        <div id="lockAnimNote" class="text-xs text-center text-slate-400 font-mono p-3 rounded-xl clay-card">
-                            Click "Play Side-by-Side Animation" above to begin.
-                        </div>
-                    </div>
-
-                    <!-- MVCC Snapshot Engine -->
-                    <div class="p-6 rounded-3xl clay-inset space-y-4">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-mono font-bold text-emerald-500">2. MVCC ENGINE (POSTGRESQL / INNODB)</span>
-                            <span id="mvccAnimBadge" class="text-xs px-2.5 py-0.5 rounded-full clay-pill text-slate-400 font-bold">Idle</span>
-                        </div>
-                        <div class="h-40 flex flex-col justify-center items-center text-center space-y-2">
-                            <div id="mvccAnimT1" class="text-xs font-mono font-bold text-purple-500">T1: Idle</div>
-                            <div class="flex items-center justify-center gap-3">
-                                <div id="mvccV1Bubble" class="px-3 py-2 rounded-xl clay-card text-xs font-mono font-bold text-slate-300 transition-all duration-300">
-                                    V1: $500 (Committed)
-                                </div>
-                                <span class="text-purple-400 font-bold">➔</span>
-                                <div id="mvccV2Bubble" class="px-3 py-2 rounded-xl clay-card text-xs font-mono font-bold text-emerald-500 transition-all duration-300 opacity-25">
-                                    V2: $400 (Writing...)
-                                </div>
-                            </div>
-                            <div id="mvccAnimT2" class="text-xs font-mono font-bold text-cyan-500">T2: Idle</div>
-                        </div>
-                        <div id="mvccAnimNote" class="text-xs text-center text-slate-400 font-mono p-3 rounded-xl clay-card">
-                            Notice how MVCC never locks readers. 0ms wait time!
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Comprehensive Comparison Matrix Table -->
-                <div class="pt-4 border-t border-black/5 dark:border-white/10 space-y-4">
-                    <h4 class="text-base font-bold" style="color: var(--clay-text-primary)">Architectural Trade-Offs: Locking vs MVCC</h4>
+                    <h3 class="text-lg font-bold" style="color: var(--clay-text-primary)">Shared (S) vs Exclusive (X) Locks</h3>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left rtl:text-right text-xs">
                             <thead>
-                                <tr class="border-b border-black/10 dark:border-white/10 text-slate-400">
-                                    <th class="pb-2.5 font-semibold">Scenario</th>
-                                    <th class="pb-2.5 font-semibold text-purple-600 dark:text-axLavender">Pessimistic Locking</th>
-                                    <th class="pb-2.5 font-semibold text-cyan-500">Optimistic MVCC</th>
+                                <tr class="border-b border-white/10 text-slate-400">
+                                    <th class="pb-2">Lock Held by T1 \ Requested by T2</th>
+                                    <th class="pb-2 text-cyan-400">Shared (S - Read)</th>
+                                    <th class="pb-2 text-red-400">Exclusive (X - Write)</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-black/5 dark:divide-white/5 text-xs">
+                            <tbody class="divide-y divide-white/5">
                                 <tr>
-                                    <td class="py-3 font-bold" style="color: var(--clay-text-primary)">T1 writes, T2 reads</td>
-                                    <td class="py-3 text-red-500 font-bold">⏳ T2 blocked until T1 commits</td>
-                                    <td class="py-3 text-emerald-500 font-bold">🚀 T2 reads older committed snapshot instantly!</td>
+                                    <td class="py-2.5 font-bold text-cyan-400">Shared (S)</td>
+                                    <td class="py-2.5 text-emerald-500 font-bold">✅ GRANTED (Readers Coexist)</td>
+                                    <td class="py-2.5 text-red-500 font-bold">⏳ BLOCKED (Write Waits)</td>
                                 </tr>
                                 <tr>
-                                    <td class="py-3 font-bold" style="color: var(--clay-text-primary)">T1 reads, T2 writes</td>
-                                    <td class="py-3 text-red-500 font-bold">⏳ T2 blocked by shared read lock</td>
-                                    <td class="py-3 text-emerald-500 font-bold">🚀 T2 creates new version without touching T1!</td>
-                                </tr>
-                                <tr>
-                                    <td class="py-3 font-bold" style="color: var(--clay-text-primary)">Deadlock frequency</td>
-                                    <td class="py-3 text-amber-500 font-medium">Frequent across read/write lock orders</td>
-                                    <td class="py-3 text-emerald-500 font-medium">Extremely rare (reads never acquire locks)</td>
-                                </tr>
-                                <tr>
-                                    <td class="py-3 font-bold" style="color: var(--clay-text-primary)">Storage & Cleanup</td>
-                                    <td class="py-3 text-slate-400">Minimal RAM lock tables</td>
-                                    <td class="py-3 text-slate-400">Requires Undo logs / Vacuuming dead tuples</td>
+                                    <td class="py-2.5 font-bold text-red-400">Exclusive (X)</td>
+                                    <td class="py-2.5 text-red-500 font-bold">⏳ BLOCKED (Read Waits)</td>
+                                    <td class="py-2.5 text-red-500 font-bold">⏳ BLOCKED (Write Waits)</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
+                    <p class="text-[11px] text-slate-400">Golden Rule: Multiple readers can share (S+S), but any writer (X) demands exclusive isolation from all readers and writers.</p>
                 </div>
 
+                <!-- Row vs Table Granularity Matrix -->
+                <div class="p-6 rounded-3xl clay-card space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-mono font-bold text-cyan-500">GRANULARITY INTERACTION MATRIX</span>
+                        <span class="text-xs px-2.5 py-0.5 rounded-full clay-pill text-slate-400 font-bold">Row vs Table</span>
+                    </div>
+                    <h3 class="text-lg font-bold" style="color: var(--clay-text-primary)">Multi-Granularity & Intent Locks</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left rtl:text-right text-xs">
+                            <thead>
+                                <tr class="border-b border-white/10 text-slate-400">
+                                    <th class="pb-2">T1 Lock</th>
+                                    <th class="pb-2">T2 Lock Request</th>
+                                    <th class="pb-2">Outcome & Reason</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-white/5">
+                                <tr>
+                                    <td class="py-2 font-mono text-purple-400">Row 1 (X)</td>
+                                    <td class="py-2 font-mono text-cyan-400">Row 2 (X)</td>
+                                    <td class="py-2 text-emerald-500 font-bold">✅ GRANTED (Disjoint rows execute concurrently)</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 font-mono text-purple-400">Row 1 (X)</td>
+                                    <td class="py-2 font-mono text-red-400">Row 1 (X)</td>
+                                    <td class="py-2 text-red-500 font-bold">⏳ BLOCKED (Same row conflict)</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 font-mono text-purple-400">Row 1 (X)</td>
+                                    <td class="py-2 font-mono text-amber-400">Table (X)</td>
+                                    <td class="py-2 text-red-500 font-bold">⏳ BLOCKED (Intent Exclusive Lock conflict)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="text-[11px] text-slate-400">Databases use Intent Locks (IX/IS) at the table level so the engine knows a row is locked without scanning millions of rows.</p>
+                </div>
+            </div>
+
+            <!-- Architectural Trade-Offs Table: Pessimistic Locking vs Optimistic MVCC -->
+            <div class="clay-card p-6 sm:p-8 space-y-4">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                    <h3 class="text-xl font-bold" style="color: var(--clay-text-primary)">Deep Architectural Comparison: Pessimistic Locking vs MVCC</h3>
+                    <span class="text-xs px-3 py-1 rounded-full clay-pill text-purple-500 font-mono font-bold">PostgreSQL • MySQL InnoDB</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left rtl:text-right text-xs">
+                        <thead>
+                            <tr class="border-b border-black/10 dark:border-white/10 text-slate-400">
+                                <th class="pb-2.5 font-semibold">Scenario / Metric</th>
+                                <th class="pb-2.5 font-semibold text-purple-600 dark:text-axLavender">Pessimistic Locking (2PL)</th>
+                                <th class="pb-2.5 font-semibold text-cyan-500">Optimistic MVCC (Snapshot Isolation)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-black/5 dark:divide-white/5 text-xs">
+                            <tr>
+                                <td class="py-3 font-bold" style="color: var(--clay-text-primary)">T1 writes, T2 reads</td>
+                                <td class="py-3 text-red-500 font-bold">⏳ T2 blocked until T1 commits</td>
+                                <td class="py-3 text-emerald-500 font-bold">🚀 T2 reads older committed snapshot instantly (0ms)!</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 font-bold" style="color: var(--clay-text-primary)">T1 reads, T2 writes</td>
+                                <td class="py-3 text-red-500 font-bold">⏳ T2 blocked by shared read lock</td>
+                                <td class="py-3 text-emerald-500 font-bold">🚀 T2 writes new version without touching T1 readers!</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 font-bold" style="color: var(--clay-text-primary)">T1 writes, T2 writes (same row)</td>
+                                <td class="py-3 text-red-500 font-bold">⏳ T2 waits for Row X-Lock</td>
+                                <td class="py-3 text-amber-500 font-bold">⏳ T2 waits for Row X-Lock (First Committer Wins)</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 font-bold" style="color: var(--clay-text-primary)">Deadlock frequency</td>
+                                <td class="py-3 text-amber-500 font-medium">Frequent across complex read/write sequences</td>
+                                <td class="py-3 text-emerald-500 font-medium">Extremely rare (reads never acquire locks)</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 font-bold" style="color: var(--clay-text-primary)">Storage & Cleanup overhead</td>
+                                <td class="py-3 text-slate-400">Minimal memory (in-RAM Lock Manager table)</td>
+                                <td class="py-3 text-slate-400">Requires Undo Log segments or VACUUM daemon for dead tuples</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
@@ -1117,6 +1340,10 @@
             document.querySelectorAll('[data-en][data-ar]').forEach(el => {
                 el.innerText = el.getAttribute(`data-${currentLang}`);
             });
+
+            if (typeof renderLab === 'function') {
+                renderLab();
+            }
         }
 
         // Section 1: Payment Simulator
@@ -1492,150 +1719,645 @@
             });
         }
 
-        // Section 5: Animated Row-Level vs Table Lock Demonstration
-        let currentLockDemoMode = 'table-x';
+        // Section 5: Two-Transaction Concurrency & MVCC Lab Engine
+        let labArch = 'row'; // 'row', 'table', 'mvcc'
+        let labScenario = 's1'; // 's1', 's2', 's3'
+        let labStep = 0; // 0 to 5
+        let labAutoPlayTimer = null;
 
-        function setLockDemoMode(mode) {
-            currentLockDemoMode = mode;
-            ['table-x', 'row-x', 'row-s', 'unlocked'].forEach(m => {
-                const btn = document.getElementById(`btnLockMode-${m}`);
-                if (m === mode) {
-                    btn.className = 'clay-btn-purple px-5 py-2.5 text-xs font-bold flex items-center gap-2';
-                } else {
-                    btn.className = 'clay-btn-neutral px-5 py-2.5 text-xs font-bold flex items-center gap-2';
+        const labScenarioConfigs = {
+            s1: {
+                title: 'Scenario 1: Read-Write Conflict (T1 Writes Row 1 ✕ T2 Reads Row 1)',
+                t1: {
+                    l1: 'BEGIN;',
+                    l2: 'UPDATE accounts SET balance = 800 WHERE id = 1;',
+                    l3: 'SELECT balance FROM accounts WHERE id = 1;',
+                    l4: 'COMMIT;'
+                },
+                t2: {
+                    l1: 'BEGIN;',
+                    l2: 'SELECT balance FROM accounts WHERE id = 1;',
+                    l3: 'SELECT balance FROM accounts WHERE id = 2;',
+                    l4: 'COMMIT;'
+                }
+            },
+            s2: {
+                title: 'Scenario 2: Disjoint Row Writes (T1 Writes Row 1 ✕ T2 Writes Row 2)',
+                t1: {
+                    l1: 'BEGIN;',
+                    l2: 'UPDATE accounts SET balance = 800 WHERE id = 1;',
+                    l3: 'SELECT balance FROM accounts WHERE id = 1;',
+                    l4: 'COMMIT;'
+                },
+                t2: {
+                    l1: 'BEGIN;',
+                    l2: 'UPDATE accounts SET balance = 600 WHERE id = 2;',
+                    l3: 'SELECT balance FROM accounts WHERE id = 2;',
+                    l4: 'COMMIT;'
+                }
+            },
+            s3: {
+                title: 'Scenario 3: Concurrent Reads (T1 Reads Row 1 ✕ T2 Reads Row 1)',
+                t1: {
+                    l1: 'BEGIN;',
+                    l2: 'SELECT balance FROM accounts WHERE id = 1;',
+                    l3: 'SELECT balance FROM accounts WHERE id = 3;',
+                    l4: 'COMMIT;'
+                },
+                t2: {
+                    l1: 'BEGIN;',
+                    l2: 'SELECT balance FROM accounts WHERE id = 1;',
+                    l3: 'SELECT balance FROM accounts WHERE id = 2;',
+                    l4: 'COMMIT;'
+                }
+            }
+        };
+
+        function setLabArch(arch) {
+            labArch = arch;
+            ['row', 'table', 'mvcc'].forEach(a => {
+                const btn = document.getElementById(`btnLabArch-${a}`);
+                if (btn) {
+                    btn.className = (a === arch) ? 'clay-btn-purple px-4 py-2 text-xs font-bold flex items-center gap-1.5 transition' : 'clay-btn-neutral px-4 py-2 text-xs font-bold flex items-center gap-1.5 transition';
                 }
             });
+            resetLab();
+        }
 
+        function setLabScenario(scen) {
+            labScenario = scen;
+            ['s1', 's2', 's3'].forEach(s => {
+                const btn = document.getElementById(`btnLabScen-${s}`);
+                if (btn) {
+                    btn.className = (s === scen) ? 'clay-btn-purple px-3.5 py-1.5 text-xs font-bold transition' : 'clay-btn-neutral px-3.5 py-1.5 text-xs font-bold transition';
+                }
+            });
+            resetLab();
+        }
+
+        function toggleLabAutoPlay() {
+            if (labAutoPlayTimer) {
+                clearInterval(labAutoPlayTimer);
+                labAutoPlayTimer = null;
+                document.getElementById('labAutoPlayIcon').innerText = '▶';
+                document.getElementById('labAutoPlayText').innerText = 'Play Animation';
+            } else {
+                if (labStep >= 5) labStep = 0;
+                document.getElementById('labAutoPlayIcon').innerText = '⏸';
+                document.getElementById('labAutoPlayText').innerText = 'Pause';
+                renderLab();
+                labAutoPlayTimer = setInterval(() => {
+                    if (labStep < 5) {
+                        labStep++;
+                        renderLab();
+                    } else {
+                        clearInterval(labAutoPlayTimer);
+                        labAutoPlayTimer = null;
+                        document.getElementById('labAutoPlayIcon').innerText = '▶';
+                        document.getElementById('labAutoPlayText').innerText = 'Play Animation';
+                    }
+                }, 1700);
+            }
+        }
+
+        function labNextStep() {
+            if (labAutoPlayTimer) toggleLabAutoPlay();
+            if (labStep < 5) {
+                labStep++;
+                renderLab();
+            }
+        }
+
+        function labPrevStep() {
+            if (labAutoPlayTimer) toggleLabAutoPlay();
+            if (labStep > 0) {
+                labStep--;
+                renderLab();
+            }
+        }
+
+        function goLabStep(s) {
+            if (labAutoPlayTimer) toggleLabAutoPlay();
+            labStep = s;
+            renderLab();
+        }
+
+        function resetLab() {
+            if (labAutoPlayTimer) {
+                clearInterval(labAutoPlayTimer);
+                labAutoPlayTimer = null;
+                document.getElementById('labAutoPlayIcon').innerText = '▶';
+                document.getElementById('labAutoPlayText').innerText = 'Play Animation';
+            }
+            labStep = 0;
+            renderLab();
+        }
+
+        function appendConsoleLog(msg, type='info') {
+            const consoleBox = document.getElementById('labEngineConsole');
+            if (!consoleBox) return;
+            const time = new Date().toTimeString().split(' ')[0] + '.' + Math.floor(Math.random()*900 + 100);
+            const line = document.createElement('div');
+            let color = 'text-slate-300';
+            if (type === 'warn') color = 'text-amber-400';
+            if (type === 'err') color = 'text-red-400 font-bold';
+            if (type === 'succ') color = 'text-emerald-400 font-bold';
+            line.className = `${color} leading-relaxed`;
+            line.innerText = `[${time}] ${msg}`;
+            consoleBox.appendChild(line);
+            consoleBox.scrollTop = consoleBox.scrollHeight;
+        }
+
+        function renderLab() {
+            const config = labScenarioConfigs[labScenario];
+            
+            // 1. Update SQL Text Lines
+            document.getElementById('t1CodeText-2').innerHTML = `<span class="text-slate-500 mr-1.5">2</span>${config.t1.l2}`;
+            document.getElementById('t1CodeText-3').innerHTML = `<span class="text-slate-500 mr-1.5">3</span>${config.t1.l3}`;
+            document.getElementById('t2CodeText-2').innerHTML = `<span class="text-slate-500 mr-1.5">2</span>${config.t2.l2}`;
+            document.getElementById('t2CodeText-3').innerHTML = `<span class="text-slate-500 mr-1.5">3</span>${config.t2.l3}`;
+
+            // 2. Update Step Pills
+            for (let i = 0; i <= 5; i++) {
+                const dot = document.getElementById(`stepDot-${i}`);
+                if (dot) {
+                    if (i === labStep) {
+                        dot.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold font-mono clay-btn-purple text-white';
+                    } else if (i < labStep) {
+                        dot.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold font-mono clay-pill text-purple-600 dark:text-axLavender';
+                    } else {
+                        dot.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold font-mono clay-pill text-slate-400';
+                    }
+                }
+            }
+            document.getElementById('labStepCounterBadge').innerText = `Step ${labStep}/5`;
+
+            // Reset base classes for rows
+            const row1 = document.getElementById('labRow1');
+            const row2 = document.getElementById('labRow2');
+            const row3 = document.getElementById('labRow3');
+            const r1Badge = document.getElementById('labRow1Badge');
+            const r2Badge = document.getElementById('labRow2Badge');
+            const r3Badge = document.getElementById('labRow3Badge');
+            const r1Bal = document.getElementById('labRow1Balance');
+            const r2Bal = document.getElementById('labRow2Balance');
             const shutter = document.getElementById('tableShutterOverlay');
-            const row1 = document.getElementById('animRow1');
-            const row2 = document.getElementById('animRow2');
-            const row3 = document.getElementById('animRow3');
-            const r1Badge = document.getElementById('animRow1Badge');
-            const r2Badge = document.getElementById('animRow2Badge');
-            const r3Badge = document.getElementById('animRow3Badge');
-            const logText = document.getElementById('lockDemoEventText');
-            const headerLabel = document.getElementById('lockDemoHeaderLabel');
-            const headerDesc = document.getElementById('lockDemoHeaderDesc');
+            const r1MvccBox = document.getElementById('labRow1MvccBox');
+            const r2MvccBox = document.getElementById('labRow2MvccBox');
+            const mvccV2Row = document.getElementById('mvccV2Row');
+            const mvccT2Read = document.getElementById('mvccT2ReadIndicator');
+            const mvccRow2V2Row = document.getElementById('mvccRow2V2Row');
+            const mvccRow2T2Read = document.getElementById('mvccRow2T2ReadIndicator');
+            
+            // Mode indicator badge
+            const modeBadge = document.getElementById('tableModeIndicatorBadge');
+            if (labArch === 'row') modeBadge.innerText = 'Row-Level 2PL (Shared & Exclusive)';
+            if (labArch === 'table') modeBadge.innerText = 'Table-Level Lock (Table Closes Shut)';
+            if (labArch === 'mvcc') modeBadge.innerText = 'MVCC Engine (Snapshot Isolation)';
 
-            // Reset all row highlights
-            row1.className = 'p-4 rounded-2xl clay-card flex items-center justify-between transition-all duration-300';
-            row2.className = 'p-4 rounded-2xl clay-card flex items-center justify-between transition-all duration-300';
-            row3.className = 'p-4 rounded-2xl clay-card flex items-center justify-between transition-all duration-300';
+            // Clean code line styles
+            for (let i = 1; i <= 4; i++) {
+                const l1 = document.getElementById(`t1Line-${i}`);
+                const l2 = document.getElementById(`t2Line-${i}`);
+                const c1 = document.getElementById(`t1Check-${i}`);
+                const c2 = document.getElementById(`t2Check-${i}`);
+                l1.className = 'p-2 rounded-xl transition-all duration-200 flex items-center justify-between opacity-40';
+                l2.className = 'p-2 rounded-xl transition-all duration-200 flex items-center justify-between opacity-40';
+                c1.innerText = '';
+                c2.innerText = '';
+            }
+
+            row1.className = 'p-3.5 rounded-2xl clay-card transition-all duration-300 space-y-2';
+            row2.className = 'p-3.5 rounded-2xl clay-card transition-all duration-300 space-y-2';
+            row3.className = 'p-3.5 rounded-2xl clay-card transition-all duration-300 flex items-center justify-between';
             r1Badge.innerText = 'Open';
-            r1Badge.className = 'px-3 py-1 rounded-full clay-pill text-xs font-mono font-bold';
+            r1Badge.className = 'px-2.5 py-1 rounded-full clay-pill text-[10px] font-mono font-bold text-slate-400';
             r2Badge.innerText = 'Open';
-            r2Badge.className = 'px-3 py-1 rounded-full clay-pill text-xs font-mono font-bold';
-            r3Badge.innerText = 'Open';
-            r3Badge.className = 'px-3 py-1 rounded-full clay-pill text-xs font-mono font-bold';
+            r2Badge.className = 'px-2.5 py-1 rounded-full clay-pill text-[10px] font-mono font-bold text-slate-400';
+            r1Bal.innerText = '$1,000.00';
+            r2Bal.innerText = '$500.00';
 
-            if (mode === 'table-x') {
-                // Table Shutter CLOSES OVER ENTIRE TABLE
-                shutter.className = 'table-shutter closed absolute inset-0 z-30 bg-slate-900/90 backdrop-blur-md rounded-3xl border-4 border-red-500/80 flex flex-col items-center justify-center text-center p-6 space-y-3';
-                headerLabel.innerText = 'MODE: Table-Level Exclusive Lock (Table Closes Shut 🔒)';
-                headerDesc.innerText = 'Transaction T1 locked the entire table. The heavy metal barrier is closed; no transactions can access ANY row!';
-                logText.innerText = 'Table Shutter Closed! Any transaction attempting to READ or WRITE any row will be blocked outside.';
-            } else if (mode === 'row-x') {
-                // Table is open, only Row 1 is clamped
+            // Hide MVCC containers by default
+            r1MvccBox.classList.add('hidden');
+            r2MvccBox.classList.add('hidden');
+            mvccV2Row.classList.add('hidden');
+            mvccT2Read.classList.add('hidden');
+            mvccRow2V2Row.classList.add('hidden');
+            mvccRow2T2Read.classList.add('hidden');
+
+            // Default indicators
+            let bannerTitle = '';
+            let bannerText = '';
+            let t1Status = 'IDLE';
+            let t2Status = 'IDLE';
+            let t1Held = 'None';
+            let t2Latency = '0ms';
+            let t2LockState = 'None';
+            let conflictText = 'None';
+            let throughputText = '100% (Concurrent)';
+
+            // STEP 0: INITIAL STATE
+            if (labStep === 0) {
+                bannerTitle = 'Step 0: Initial Clean Database State';
+                bannerText = 'Database is idle. Alice Johnson has $1,000.00 and Bob Smith has $500.00. No transactions have started.';
                 shutter.className = 'table-shutter open absolute inset-0 z-30 pointer-events-none opacity-0';
-                headerLabel.innerText = 'MODE: Row-Level Exclusive Lock (Only Row 1 Clamped)';
-                headerDesc.innerText = 'Transaction T1 is modifying Row 1. Only Row 1 has an X-Lock; Row 2 and Row 3 remain completely open!';
-                row1.classList.add('border-2', 'border-red-500', 'bg-red-500/10');
-                r1Badge.innerText = '🔒 Exclusive Lock (T1)';
-                r1Badge.className = 'px-3 py-1 rounded-full clay-pill text-xs font-mono font-bold text-red-500';
-                logText.innerText = 'Row 1 is locked by T1. However, Row 2 and Row 3 are free for parallel execution!';
-            } else if (mode === 'row-s') {
-                // Shared Lock on Row 1
+                document.getElementById('labEngineConsole').innerHTML = '<div class="text-slate-500">[SYSTEM] Lab initialized. Step 0: Initial state loaded.</div>';
+            }
+
+            // STEP 1: T1 BEGINS & EXECUTES FIRST WRITE/READ
+            else if (labStep === 1) {
+                bannerTitle = 'Step 1: Transaction T1 Begins & Takes Locks/Snapshots';
+                t1Status = 'ACTIVE';
+                document.getElementById('t1Line-1').className = 'p-2 rounded-xl transition-all duration-200 flex items-center justify-between bg-purple-500/10 border border-purple-500';
+                document.getElementById('t1Check-1').innerText = '✓';
+                document.getElementById('t1Line-2').className = 'p-2 rounded-xl transition-all duration-200 flex items-center justify-between bg-purple-500/20 border-2 border-purple-500 text-purple-300 font-bold';
+                document.getElementById('t1Check-2').innerText = '👉 Active';
+
+                if (labArch === 'table') {
+                    // Table Shutter closes down over the entire table
+                    shutter.className = 'table-shutter closed absolute inset-0 z-30 bg-slate-900/90 backdrop-blur-md rounded-3xl border-4 border-red-500/80 flex flex-col items-center justify-center text-center p-6 space-y-3 pointer-events-auto opacity-100';
+                    t1Held = 'Table WRITE Lock';
+                    r1Badge.innerText = '🔒 Table X-Lock';
+                    r1Badge.className = 'px-2.5 py-1 rounded-full clay-pill text-[10px] font-mono font-bold text-red-500';
+                    bannerText = 'Transaction T1 acquired a Table-Level Exclusive Lock (LOCK TABLES accounts WRITE). The whole table shutter clamps shut!';
+                    appendConsoleLog('T1: BEGIN; LOCK TABLES accounts WRITE -> Table Exclusive Lock GRANTED. Table shutter closed.', 'warn');
+                    conflictText = 'Table Sealed (All access blocked)';
+                    throughputText = '0% (Serialized)';
+                } else if (labArch === 'row') {
+                    shutter.className = 'table-shutter open absolute inset-0 z-30 pointer-events-none opacity-0';
+                    if (labScenario === 's3') {
+                        // Shared Read Lock
+                        row1.classList.add('border-2', 'border-cyan-500', 'bg-cyan-500/10');
+                        r1Badge.innerText = '📖 Shared Lock (T1)';
+                        r1Badge.className = 'px-2.5 py-1 rounded-full clay-pill text-[10px] font-mono font-bold text-cyan-500';
+                        t1Held = 'Row 1 [S-Lock]';
+                        bannerText = 'Transaction T1 acquired a Shared Read Lock (S-Lock) on Row 1 (Alice). Other readers will be allowed to share.';
+                        appendConsoleLog('T1: BEGIN; SELECT id=1 -> Shared Lock (S) GRANTED on Row 1. Row 2 & 3 open.', 'info');
+                    } else {
+                        // Exclusive Write Lock
+                        row1.classList.add('border-2', 'border-red-500', 'bg-red-500/10');
+                        r1Badge.innerText = '🔒 Exclusive Lock (T1)';
+                        r1Badge.className = 'px-2.5 py-1 rounded-full clay-pill text-[10px] font-mono font-bold text-red-500';
+                        t1Held = 'Row 1 [X-Lock]';
+                        bannerText = 'Transaction T1 acquired an Exclusive Lock (X-Lock) on Row 1 (Alice). Only Row 1 is locked; Row 2 & 3 remain open!';
+                        appendConsoleLog('T1: BEGIN; UPDATE id=1 SET balance=800 -> Exclusive Lock (X) GRANTED on Row 1.', 'info');
+                    }
+                } else if (labArch === 'mvcc') {
+                    shutter.className = 'table-shutter open absolute inset-0 z-30 pointer-events-none opacity-0';
+                    r1MvccBox.classList.remove('hidden');
+                    if (labScenario === 's3') {
+                        bannerText = 'Transaction T1 reads Row 1 using Snapshot Isolation. No locks acquired!';
+                        appendConsoleLog('T1: BEGIN; SELECT id=1 -> Snapshot read on V1 ($1,000). Zero locks acquired.', 'succ');
+                    } else {
+                        mvccV2Row.classList.remove('hidden');
+                        row1.classList.add('border-2', 'border-purple-500/60');
+                        r1Badge.innerText = '⚡ V2 In-Progress';
+                        r1Badge.className = 'px-2.5 py-1 rounded-full clay-pill text-[10px] font-mono font-bold text-purple-400';
+                        t1Held = 'Row 1 [Write Intent]';
+                        bannerText = 'Transaction T1 created Version 2 ($800.00) in Undo Log buffer. Snapshot V1 ($1,000.00) is preserved untouched!';
+                        appendConsoleLog('T1: BEGIN; UPDATE id=1 SET balance=800 -> Created tuple V2 (xmin=105). Undo log rollptr preserved.', 'succ');
+                    }
+                }
+            }
+
+            // STEP 2: T2 INTERVENES (The Crucial Test!)
+            else if (labStep === 2) {
+                bannerTitle = 'Step 2: Transaction T2 Starts & Attempts Data Access';
+                t1Status = 'ACTIVE';
+                document.getElementById('t1Line-1').className = 'p-2 rounded-xl transition-all duration-200 flex items-center justify-between opacity-80';
+                document.getElementById('t1Check-1').innerText = '✓';
+                document.getElementById('t1Line-2').className = 'p-2 rounded-xl transition-all duration-200 flex items-center justify-between bg-purple-500/10 border border-purple-500';
+                document.getElementById('t1Check-2').innerText = '✓';
+                document.getElementById('t1Line-3').className = 'p-2 rounded-xl transition-all duration-200 flex items-center justify-between bg-purple-500/20 border-2 border-purple-500 text-purple-300 font-bold';
+                document.getElementById('t1Check-3').innerText = '👉 Active';
+
+                // T2 starts
+                document.getElementById('t2Line-1').className = 'p-2 rounded-xl transition-all duration-200 flex items-center justify-between opacity-80';
+                document.getElementById('t2Check-1').innerText = '✓';
+
+                if (labArch === 'table') {
+                    // T2 is BLOCKED AT GATES
+                    shutter.className = 'table-shutter closed absolute inset-0 z-30 bg-slate-900/90 backdrop-blur-md rounded-3xl border-4 border-red-500/80 flex flex-col items-center justify-center text-center p-6 space-y-3 pointer-events-auto opacity-100';
+                    t1Held = 'Table WRITE Lock';
+                    t2Status = '⏳ BLOCKED AT GATE';
+                    t2Latency = '+350ms (Queued)';
+                    t2LockState = 'Waiting for Table Lock';
+                    document.getElementById('t2Line-2').className = 'p-2 rounded-xl transition-all duration-200 flex items-center justify-between bg-red-500/20 border-2 border-red-500 text-red-400 font-bold';
+                    document.getElementById('t2Check-2').innerText = '⛔ Blocked';
+                    bannerText = '⛔ T2 BLOCKED AT TABLE GATES! T2 tried to access data, but T1 holds a whole-table exclusive lock. T2 is forced into wait queue!';
+                    appendConsoleLog('T2: BEGIN; SELECT id=1 -> BLOCKED! Table is held exclusively by T1. T2 put to sleep in lock wait queue.', 'err');
+                    conflictText = '⛔ Active Conflict (T2 Suspended)';
+                    throughputText = '0% (Halted)';
+                } else if (labArch === 'row') {
+                    shutter.className = 'table-shutter open absolute inset-0 z-30 pointer-events-none opacity-0';
+                    if (labScenario === 's1') {
+                        // Conflict on Row 1 (X vs S)
+                        row1.classList.add('border-2', 'border-red-500', 'bg-red-500/10');
+                        r1Badge.innerText = '🔒 Held by T1 (T2 Blocked)';
+                        r1Badge.className = 'px-2.5 py-1 rounded-full clay-pill text-[10px] font-mono font-bold text-red-500';
+                        t1Held = 'Row 1 [X-Lock]';
+                        t2Status = '⏳ BLOCKED ON ROW 1';
+                        t2Latency = '+280ms (Queued)';
+                        t2LockState = 'Waiting for Row 1 X-Lock';
+                        document.getElementById('t2Line-2').className = 'p-2 rounded-xl transition-all duration-200 flex items-center justify-between bg-red-500/20 border-2 border-red-500 text-red-400 font-bold';
+                        document.getElementById('t2Check-2').innerText = '⛔ Blocked';
+                        bannerText = '⛔ T2 BLOCKED ON ROW 1! T2 requested Shared Lock (S) on Row 1 to read, but T1 holds an Exclusive Lock (X). S & X conflict! T2 must wait.';
+                        appendConsoleLog('T2: BEGIN; SELECT id=1 -> CONFLICT! Row 1 has active X-Lock held by T1. T2 thread enqueued in row wait-queue.', 'err');
+                        conflictText = 'Row 1 Contention (S vs X)';
+                        throughputText = '50% (Row 1 serializing)';
+                    } else if (labScenario === 's2') {
+                        // Disjoint rows (T1 Row 1, T2 Row 2) -> Parallel!
+                        row1.classList.add('border-2', 'border-purple-500', 'bg-purple-500/10');
+                        r1Badge.innerText = '🔒 Locked (T1)';
+                        r1Badge.className = 'px-2.5 py-1 rounded-full clay-pill text-[10px] font-mono font-bold text-purple-400';
+                        row2.classList.add('border-2', 'border-cyan-500', 'bg-cyan-500/10');
+                        r2Badge.innerText = '🔒 Locked (T2)';
+                        r2Badge.className = 'px-2.5 py-1 rounded-full clay-pill text-[10px] font-mono font-bold text-cyan-400';
+                        t1Held = 'Row 1 [X-Lock]';
+                        t2Status = 'ACTIVE (PARALLEL)';
+                        t2Latency = '0ms (Parallel)';
+                        t2LockState = 'Row 2 [X-Lock]';
+                        document.getElementById('t2Line-2').className = 'p-2 rounded-xl transition-all duration-200 flex items-center justify-between bg-cyan-500/20 border-2 border-cyan-500 text-cyan-300 font-bold';
+                        document.getElementById('t2Check-2').innerText = '✅ Granted';
+                        bannerText = '✅ T2 GRANTED IMMEDIATELY! T1 is modifying Row 1, and T2 is modifying Row 2. Because locks are ROW-LEVEL, both run in parallel with 0 delay!';
+                        appendConsoleLog('T2: BEGIN; UPDATE id=2 -> GRANTED! Row 2 is independent of Row 1. Zero wait time!', 'succ');
+                        conflictText = 'Zero Conflict (Disjoint Rows)';
+                        throughputText = '100% (High Concurrency)';
+                    } else if (labScenario === 's3') {
+                        // Shared Locks Compatible
+                        row1.classList.add('border-2', 'border-cyan-500', 'bg-cyan-500/10');
+                        r1Badge.innerText = '📖 Shared (T1 & T2)';
+                        r1Badge.className = 'px-2.5 py-1 rounded-full clay-pill text-[10px] font-mono font-bold text-cyan-400';
+                        t1Held = 'Row 1 [S-Lock]';
+                        t2Status = 'ACTIVE (SHARED)';
+                        t2Latency = '0ms';
+                        t2LockState = 'Row 1 [S-Lock]';
+                        document.getElementById('t2Line-2').className = 'p-2 rounded-xl transition-all duration-200 flex items-center justify-between bg-cyan-500/20 border-2 border-cyan-500 text-cyan-300 font-bold';
+                        document.getElementById('t2Check-2').innerText = '✅ Shared Read';
+                        bannerText = '✅ T2 GRANTED! Both T1 and T2 requested Shared Locks (S-Locks) on Row 1. Shared locks are fully compatible!';
+                        appendConsoleLog('T2: BEGIN; SELECT id=1 -> Shared Lock GRANTED. Multiple readers coexist peacefully.', 'succ');
+                        conflictText = 'Compatible Shared Reads';
+                        throughputText = '100%';
+                    }
+                } else if (labArch === 'mvcc') {
+                    shutter.className = 'table-shutter open absolute inset-0 z-30 pointer-events-none opacity-0';
+                    r1MvccBox.classList.remove('hidden');
+                    mvccV2Row.classList.remove('hidden');
+                    mvccT2Read.classList.remove('hidden');
+                    t1Held = 'Row 1 [V2 writing]';
+                    t2Status = '🚀 SNAPSHOT READ';
+                    t2Latency = '0ms (Instant)';
+                    t2LockState = 'Snapshot View (No Locks)';
+                    document.getElementById('t2Line-2').className = 'p-2 rounded-xl transition-all duration-200 flex items-center justify-between bg-emerald-500/20 border-2 border-emerald-500 text-emerald-300 font-bold';
+                    document.getElementById('t2Check-2').innerText = '🚀 V1 Snapshot';
+                    bannerText = '🚀 MVCC MAGIC: READERS NEVER BLOCK WRITERS! While T1 is busy writing V2 ($800), T2 reads committed Snapshot V1 ($1,000) instantly with 0ms delay!';
+                    appendConsoleLog('T2: BEGIN; SELECT id=1 -> MVCC Snapshot isolation: routed to committed V1 ($1,000) via Undo Log. ZERO wait time!', 'succ');
+                    conflictText = 'Zero Conflict (Snapshot Isolation)';
+                    throughputText = '100% (Ultra High Throughput)';
+                }
+            }
+
+            // STEP 3: CONCURRENCY EXECUTION & SECOND QUERIES
+            else if (labStep === 3) {
+                bannerTitle = 'Step 3: Concurrency Resolution & Intermediate Execution';
+                t1Status = 'ACTIVE';
+                t1Held = (labArch === 'table') ? 'Table WRITE Lock' : 'Row 1 Lock';
+                document.getElementById('t1Line-1').className = 'p-2 rounded-xl transition-all duration-200 flex items-center justify-between opacity-80';
+                document.getElementById('t1Check-1').innerText = '✓';
+                document.getElementById('t1Line-2').className = 'p-2 rounded-xl transition-all duration-200 flex items-center justify-between opacity-80';
+                document.getElementById('t1Check-2').innerText = '✓';
+                document.getElementById('t1Line-3').className = 'p-2 rounded-xl transition-all duration-200 flex items-center justify-between bg-purple-500/10 border border-purple-500';
+                document.getElementById('t1Check-3').innerText = '✓';
+
+                if (labArch === 'table') {
+                    shutter.className = 'table-shutter closed absolute inset-0 z-30 bg-slate-900/90 backdrop-blur-md rounded-3xl border-4 border-red-500/80 flex flex-col items-center justify-center text-center p-6 space-y-3 pointer-events-auto opacity-100';
+                    t2Status = '⏳ STILL BLOCKED';
+                    t2Latency = '+580ms';
+                    t2LockState = 'Waiting for Table Lock';
+                    document.getElementById('t2Line-2').className = 'p-2 rounded-xl transition-all duration-200 flex items-center justify-between bg-red-500/20 border-2 border-red-500 text-red-400 font-bold';
+                    document.getElementById('t2Check-2').innerText = '⏳ Queued';
+                    bannerText = 'T2 is still completely frozen at the table gate. Even if T2 wanted to read Row 2 (Bob), the Table Lock prevents any access whatsoever.';
+                    appendConsoleLog('T2: Thread waiting on Table Mutex. Cannot advance to line 3.', 'warn');
+                    conflictText = 'Total Table Lockout';
+                    throughputText = '0%';
+                } else if (labArch === 'row') {
+                    shutter.className = 'table-shutter open absolute inset-0 z-30 pointer-events-none opacity-0';
+                    if (labScenario === 's1') {
+                        row1.classList.add('border-2', 'border-red-500', 'bg-red-500/10');
+                        r1Badge.innerText = '🔒 Held by T1';
+                        r1Badge.className = 'px-2.5 py-1 rounded-full clay-pill text-[10px] font-mono font-bold text-red-500';
+                        t2Status = '⏳ WAITING FOR T1';
+                        t2Latency = '+420ms';
+                        t2LockState = 'Waiting for Row 1';
+                        document.getElementById('t2Line-2').className = 'p-2 rounded-xl transition-all duration-200 flex items-center justify-between bg-red-500/20 border-2 border-red-500 text-red-400 font-bold';
+                        document.getElementById('t2Check-2').innerText = '⏳ Queued';
+                        bannerText = 'T2 remains blocked on Row 1 waiting for T1 to commit. This guarantees T2 will never see dirty uncommitted data ($800)!';
+                        appendConsoleLog('T2: Waiting on row_lock(accounts, 1). Strict 2PL prevents dirty read.', 'warn');
+                        conflictText = 'Row 1 Blocked (Guarantees Consistency)';
+                        throughputText = '50%';
+                    } else if (labScenario === 's2') {
+                        row1.classList.add('border-2', 'border-purple-500', 'bg-purple-500/10');
+                        row2.classList.add('border-2', 'border-cyan-500', 'bg-cyan-500/10');
+                        r1Badge.innerText = '🔒 Modified ($800)';
+                        r2Badge.innerText = '🔒 Modified ($600)';
+                        r1Badge.className = 'px-2.5 py-1 rounded-full clay-pill text-[10px] font-mono font-bold text-purple-400';
+                        r2Badge.className = 'px-2.5 py-1 rounded-full clay-pill text-[10px] font-mono font-bold text-cyan-400';
+                        t2Status = 'ACTIVE';
+                        t2Latency = '0ms';
+                        document.getElementById('t2Line-2').className = 'p-2 rounded-xl transition-all duration-200 flex items-center justify-between opacity-80';
+                        document.getElementById('t2Check-2').innerText = '✓';
+                        document.getElementById('t2Line-3').className = 'p-2 rounded-xl transition-all duration-200 flex items-center justify-between bg-cyan-500/20 border-2 border-cyan-500 text-cyan-300 font-bold';
+                        document.getElementById('t2Check-3').innerText = '👉 Active';
+                        bannerText = 'Both T1 and T2 executed their updates concurrently without any delay! Row-level granularity maximizes CPU and I/O efficiency.';
+                        appendConsoleLog('T2: Line 3 executing. Disjoint row updates proceeding in parallel.', 'succ');
+                        conflictText = 'Zero Conflict';
+                        throughputText = '100%';
+                    } else if (labScenario === 's3') {
+                        row1.classList.add('border-2', 'border-cyan-500', 'bg-cyan-500/10');
+                        t2Status = 'ACTIVE';
+                        document.getElementById('t2Line-2').className = 'p-2 rounded-xl transition-all duration-200 flex items-center justify-between opacity-80';
+                        document.getElementById('t2Check-2').innerText = '✓';
+                        document.getElementById('t2Line-3').className = 'p-2 rounded-xl transition-all duration-200 flex items-center justify-between bg-cyan-500/20 border-2 border-cyan-500 text-cyan-300 font-bold';
+                        document.getElementById('t2Check-3').innerText = '👉 Active';
+                        bannerText = 'T2 reads Row 2 while T1 continues its query. Both readers coexist with shared locks.';
+                        appendConsoleLog('T2: Line 3 executed. Multiple shared locks working together.', 'succ');
+                    }
+                } else if (labArch === 'mvcc') {
+                    shutter.className = 'table-shutter open absolute inset-0 z-30 pointer-events-none opacity-0';
+                    r1MvccBox.classList.remove('hidden');
+                    mvccV2Row.classList.remove('hidden');
+                    document.getElementById('t2Line-2').className = 'p-2 rounded-xl transition-all duration-200 flex items-center justify-between opacity-80';
+                    document.getElementById('t2Check-2').innerText = '✓ ($1,000)';
+                    document.getElementById('t2Line-3').className = 'p-2 rounded-xl transition-all duration-200 flex items-center justify-between opacity-80';
+                    document.getElementById('t2Check-3').innerText = '✓ ($500)';
+                    document.getElementById('t2Line-4').className = 'p-2 rounded-xl transition-all duration-200 flex items-center justify-between bg-emerald-500/20 border-2 border-emerald-500 text-emerald-300 font-bold';
+                    document.getElementById('t2Check-4').innerText = '✓ COMMITTED';
+                    t2Status = 'COMMITTED ✓';
+                    t2Latency = '0ms (Fast Finish)';
+                    bannerText = '🚀 T2 ALREADY COMMITTED! Under MVCC, T2 finished all reads and committed while T1 is still working. Zero lock contention, zero wait time!';
+                    appendConsoleLog('T2: COMMIT completed. Entire transaction finished in 1.4ms without waiting for T1!', 'succ');
+                    conflictText = 'Zero Lock Overhead';
+                    throughputText = '100%';
+                }
+            }
+
+            // STEP 4: T1 COMMITS
+            else if (labStep === 4) {
+                bannerTitle = 'Step 4: Transaction T1 Commits & Releases Resources';
+                t1Status = 'COMMITTED ✓';
+                t1Held = 'None (Released)';
+                document.getElementById('t1Line-1').className = 'p-2 rounded-xl transition-all duration-200 flex items-center justify-between opacity-80';
+                document.getElementById('t1Check-1').innerText = '✓';
+                document.getElementById('t1Line-2').className = 'p-2 rounded-xl transition-all duration-200 flex items-center justify-between opacity-80';
+                document.getElementById('t1Check-2').innerText = '✓';
+                document.getElementById('t1Line-3').className = 'p-2 rounded-xl transition-all duration-200 flex items-center justify-between opacity-80';
+                document.getElementById('t1Check-3').innerText = '✓';
+                document.getElementById('t1Line-4').className = 'p-2 rounded-xl transition-all duration-200 flex items-center justify-between bg-purple-500/20 border-2 border-purple-500 text-purple-300 font-bold';
+                document.getElementById('t1Check-4').innerText = '✓ COMMITTED';
+
+                if (labScenario === 's1' || labScenario === 's2') {
+                    r1Bal.innerText = '$800.00';
+                }
+
+                if (labArch === 'table') {
+                    // Table shutter rolls up / opens!
+                    shutter.className = 'table-shutter open absolute inset-0 z-30 pointer-events-none opacity-0';
+                    t2Status = '🔓 UNBLOCKED (RUNNING)';
+                    t2Latency = '+650ms Total Wait';
+                    t2LockState = 'Granted Read';
+                    document.getElementById('t2Line-2').className = 'p-2 rounded-xl transition-all duration-200 flex items-center justify-between bg-emerald-500/20 border-2 border-emerald-500 text-emerald-300 font-bold';
+                    document.getElementById('t2Check-2').innerText = '✓ Unblocked';
+                    bannerText = '🔓 TABLE SHUTTER OPENS! T1 issued COMMIT and released the Table Lock. T2 is finally unblocked from the wait queue and executes its read!';
+                    appendConsoleLog('T1: COMMIT; Table WRITE lock released. Shutter opened. Awakening queued threads (T2).', 'succ');
+                    appendConsoleLog('T2: Awakened from wait queue. Executing SELECT id=1 (reads post-commit $800.00).', 'info');
+                    conflictText = 'Lock Released -> T2 Executing';
+                    throughputText = 'Serialized Completion';
+                } else if (labArch === 'row') {
+                    shutter.className = 'table-shutter open absolute inset-0 z-30 pointer-events-none opacity-0';
+                    if (labScenario === 's1') {
+                        row1.classList.remove('border-red-500', 'bg-red-500/10');
+                        r1Badge.innerText = '🔓 Granted to T2';
+                        r1Badge.className = 'px-2.5 py-1 rounded-full clay-pill text-[10px] font-mono font-bold text-emerald-400';
+                        t2Status = '🔓 UNBLOCKED (RUNNING)';
+                        t2Latency = '+450ms Total Wait';
+                        t2LockState = 'Row 1 S-Lock Granted';
+                        document.getElementById('t2Line-2').className = 'p-2 rounded-xl transition-all duration-200 flex items-center justify-between bg-emerald-500/20 border-2 border-emerald-500 text-emerald-300 font-bold';
+                        document.getElementById('t2Check-2').innerText = '✓ Granted';
+                        bannerText = '🔓 ROW 1 UNLOCKED! T1 issued COMMIT and released its X-Lock. T2 is immediately granted S-Lock on Row 1 and safely reads the committed $800.00 balance.';
+                        appendConsoleLog('T1: COMMIT; Row 1 X-Lock released. T2 granted S-Lock on Row 1.', 'succ');
+                        appendConsoleLog('T2: SELECT id=1 completed with committed value $800.00. 0 dirty reads.', 'info');
+                        conflictText = 'Lock Released';
+                    } else if (labScenario === 's2') {
+                        r2Bal.innerText = '$600.00';
+                        document.getElementById('t2Line-4').className = 'p-2 rounded-xl transition-all duration-200 flex items-center justify-between bg-cyan-500/20 border-2 border-cyan-500 text-cyan-300 font-bold';
+                        document.getElementById('t2Check-4').innerText = '✓ COMMITTED';
+                        t2Status = 'COMMITTED ✓';
+                        bannerText = 'Both T1 and T2 have committed their updates on independent rows! Data consistency 100% maintained.';
+                        appendConsoleLog('T1 & T2 both COMMITTED in parallel.', 'succ');
+                    } else if (labScenario === 's3') {
+                        t2Status = 'COMMITTED ✓';
+                        document.getElementById('t2Line-4').className = 'p-2 rounded-xl transition-all duration-200 flex items-center justify-between bg-cyan-500/20 border-2 border-cyan-500 text-cyan-300 font-bold';
+                        document.getElementById('t2Check-4').innerText = '✓ COMMITTED';
+                        bannerText = 'Both shared read transactions finished and committed.';
+                        appendConsoleLog('T1 & T2 reads completed and committed.', 'succ');
+                    }
+                } else if (labArch === 'mvcc') {
+                    shutter.className = 'table-shutter open absolute inset-0 z-30 pointer-events-none opacity-0';
+                    r1MvccBox.classList.remove('hidden');
+                    document.getElementById('mvccV1Tag').innerText = 'V1: Dead Tuple (Pending Vacuum)';
+                    document.getElementById('mvccV1Tag').className = 'px-2 py-0.5 rounded-lg clay-inset text-slate-500 line-through';
+                    mvccV2Row.classList.remove('hidden');
+                    document.getElementById('mvccV2Tag').innerText = 'V2: $800.00 (Committed Official)';
+                    document.getElementById('mvccV2Tag').className = 'px-2 py-0.5 rounded-lg clay-card text-emerald-400 border border-emerald-500/50';
+                    t2Status = 'COMMITTED ✓';
+                    bannerText = 'T1 commits! Version 2 ($800.00) is now the official committed version in the database. Version 1 is marked for background vacuuming.';
+                    appendConsoleLog('T1: COMMIT completed. V2 is officially visible to future transactions. V1 flagged for vacuuming.', 'succ');
+                }
+            }
+
+            // STEP 5: COMPLETION & FINAL CONSISTENCY VERIFICATION
+            else if (labStep === 5) {
+                bannerTitle = 'Step 5: All Transactions Completed — Data Consistency Verified ✓';
+                t1Status = 'COMMITTED ✓';
+                t2Status = 'COMMITTED ✓';
+                t1Held = 'None';
+                t2LockState = 'None';
                 shutter.className = 'table-shutter open absolute inset-0 z-30 pointer-events-none opacity-0';
-                headerLabel.innerText = 'MODE: Row-Level Shared Lock (Multiple Readers Allowed 📖)';
-                headerDesc.innerText = 'Transaction T1 is reading Row 1 with S-Lock. Other readers can also read Row 1 concurrently!';
-                row1.classList.add('border-2', 'border-cyan-500', 'bg-cyan-500/10');
-                r1Badge.innerText = '📖 Shared Lock (T1)';
-                r1Badge.className = 'px-3 py-1 rounded-full clay-pill text-xs font-mono font-bold text-cyan-500';
-                logText.innerText = 'Row 1 has a Shared Lock. Readers are granted access; writers will be blocked.';
+
+                for (let i = 1; i <= 4; i++) {
+                    document.getElementById(`t1Line-${i}`).className = 'p-2 rounded-xl flex items-center justify-between opacity-80';
+                    document.getElementById(`t1Check-${i}`).innerText = '✓';
+                    document.getElementById(`t2Line-${i}`).className = 'p-2 rounded-xl flex items-center justify-between opacity-80';
+                    document.getElementById(`t2Check-${i}`).innerText = '✓';
+                }
+
+                if (labScenario === 's1') {
+                    r1Bal.innerText = '$800.00';
+                    bannerText = `Execution Finished! Final state: Alice = $800.00. Under ${labArch.toUpperCase()}, data consistency was 100% preserved without anomalies.`;
+                } else if (labScenario === 's2') {
+                    r1Bal.innerText = '$800.00';
+                    r2Bal.innerText = '$600.00';
+                    bannerText = 'Execution Finished! Alice = $800.00 and Bob = $600.00. Both updates succeeded with total serializability.';
+                } else {
+                    bannerText = 'Execution Finished! All shared reads completed with consistent snapshot isolation.';
+                }
+
+                conflictText = 'None (All Committed)';
+                throughputText = (labArch === 'table') ? 'Low (650ms delay)' : (labArch === 'row') ? 'High (Row isolation)' : 'Maximum (0ms delay)';
+                appendConsoleLog('[SYSTEM] All transactions completed successfully. ACID Consistency verified 100%.', 'succ');
+            }
+
+            // Update DOM Elements
+            document.getElementById('labStepBannerTitle').innerText = bannerTitle;
+            document.getElementById('labStepBannerText').innerText = bannerText;
+            document.getElementById('t1StatusBadge').innerText = t1Status;
+            document.getElementById('t2StatusBadge').innerText = t2Status;
+            document.getElementById('t1HeldLocksText').innerText = t1Held;
+            document.getElementById('t2LatencyText').innerText = t2Latency;
+            document.getElementById('t2LockStateText').innerText = t2LockState;
+            document.getElementById('labConflictStatusText').innerText = conflictText;
+            document.getElementById('labThroughputText').innerText = throughputText;
+
+            // Consistency Breakdown Cards
+            updateConsistencyBreakdown();
+        }
+
+        function updateConsistencyBreakdown() {
+            const mech = document.getElementById('consistMechText');
+            const anom = document.getElementById('consistAnomText');
+            const trade = document.getElementById('consistTradeText');
+
+            if (currentLang === 'ar') {
+                if (labArch === 'row') {
+                    mech.innerHTML = '<strong>القفل ثنائي الطور (Strict 2PL):</strong> تكتسب المعاملة T1 قفلاً حصرياً (X-Lock) على الصف 1 وتحتفظ به حتى صدور أمر COMMIT. لا يمكن للمعاملة T2 الحصول على قفل مشترك (S-Lock) متعارض حتى تنتهي T1 تماماً.';
+                    anom.innerHTML = '<strong>منع القراءة القذرة (Dirty Read G1):</strong> يتم تعليق T2 في طابور انتظار القفل وتمنع فيزيائياً من قراءة الرصيد غير المؤكد ($800.00). كما يمنع فقدان التعديلات (Lost Updates P4).';
+                    trade.innerHTML = '<strong>ميزة دقة القفل (Row Granularity):</strong> الصفوف غير المتعارضة (مثل الصف 2) لا يتم قفلها، مما يتيح تزامن عالي جداً لبقية السجلات. فقط المعاملات المتنافسة على نفس الصف تنتظر.';
+                } else if (labArch === 'table') {
+                    mech.innerHTML = '<strong>التسلسل الصارم على مستوى الجدول:</strong> تكتسب قاعدة البيانات قفلاً حصرياً على الجدول كاملاً (LOCK TABLES accounts WRITE). يُعامل الجدول كوحدة واحدة مغلقة، مما يمنع أي تداخل نهائياً.';
+                    anom.innerHTML = '<strong>عزل تام ومطلق:</strong> منع كامل لجميع مشاكل التزامن من خلال إيقاف تام لكل المعاملات القادمة حتى ينتهي الكاتب بالكامل.';
+                    trade.innerHTML = '<strong>عائق كارثي للأداء (Bottleneck):</strong> تعلق جميع المعاملات القادمة عند بوابة الجدول (+650ms تأخير)، حتى لو كانت تريد قراءة صف مختلف تماماً. غير مناسب للأنظمة الإنتاجية.';
+                } else if (labArch === 'mvcc') {
+                    mech.innerHTML = '<strong>عزل لقطة الذاكرة (Snapshot Isolation):</strong> تأخذ المعاملة T2 لقطة زمنية عند بدئها. عند قراءة الصف 1، يكتشف محرك MVCC أن T1 قيد التعديل، فيوجه T2 فوراً لقراءة النسخة السابقة المؤكدة (V1: $1,000) من الـ Undo Log.';
+                    anom.innerHTML = '<strong>اتساق بدون أقفال (Lock-Free):</strong> منع القراءة القذرة بدون حجز أي أقفال قراءة! "القراءة لا تعطل الكتابة، والكتابة لا تعطل القراءة" (Readers never block writers).';
+                    trade.innerHTML = '<strong>استجابة فائقة السرعة (0ms تأخير):</strong> تنفيذ فوري لجميع القراء. التكلفة الوحيدة هي استهلاك مساحة الذاكرة للنسخ التاريخية في سجل التراجع (Undo Log)، والتي ينظفها محرك الـ VACUUM لاحقاً.';
+                }
             } else {
-                // Unlocked
-                shutter.className = 'table-shutter open absolute inset-0 z-30 pointer-events-none opacity-0';
-                headerLabel.innerText = 'MODE: Unlocked (Idle Table)';
-                headerDesc.innerText = 'No locks held. All rows are free.';
-                logText.innerText = 'All rows unlocked.';
+                if (labArch === 'row') {
+                    mech.innerHTML = '<strong>Two-Phase Locking (2PL):</strong> T1 acquires an Exclusive Lock (X-Lock) on Row 1 during the growing phase and holds it until COMMIT (Strict 2PL). T2 cannot obtain an incompatible Shared Lock (S-Lock) until T1 finishes.';
+                    anom.innerHTML = '<strong>Zero Dirty Reads (G1):</strong> T2 is suspended in the lock queue and physically cannot read uncommitted balance $800.00. Also eliminates Lost Updates (P4) and Non-Repeatable Reads.';
+                    trade.innerHTML = '<strong>Granularity Advantage:</strong> Disjoint rows (e.g. Row 2) are not locked, allowing high concurrent throughput for different records. Only transactions accessing the exact same row experience wait latency.';
+                } else if (labArch === 'table') {
+                    mech.innerHTML = '<strong>Coarse Table Serialization:</strong> The database acquires a Table-Level Exclusive Lock (LOCK TABLES accounts WRITE). The table is treated as a single coarse resource; no concurrent interleaving is allowed.';
+                    anom.innerHTML = '<strong>Absolute Isolation:</strong> Complete prevention of all anomalies (Dirty Reads, Non-Repeatable Reads, Phantoms) through total coarse-grained serialization of incoming traffic.';
+                    trade.innerHTML = '<strong>Severe Throughput Bottleneck:</strong> Incoming transactions are blocked at the gates (+650ms wait), even if accessing completely unrelated rows. Unsuitable for high-concurrency production workloads.';
+                } else if (labArch === 'mvcc') {
+                    mech.innerHTML = '<strong>Snapshot Isolation (Point-in-Time):</strong> T2 is assigned a snapshot timestamp at transaction start. When reading Row 1, the MVCC engine detects T1 is uncommitted and seamlessly fetches the historical committed tuple (V1: $1,000) from the Undo Log.';
+                    anom.innerHTML = '<strong>Lock-Free Consistency:</strong> Eliminates Dirty Reads and Non-Repeatable Reads without taking ANY read locks! Readers never block writers, and writers never block readers.';
+                    trade.innerHTML = '<strong>Ultra-Low Latency (0ms):</strong> Instant execution for all readers. The trade-off is database storage bloat: historical versions in the Undo Log / Heap must be purged periodically by a background VACUUM process.';
+                }
             }
         }
-
-        function testIncomingT2Transaction() {
-            const logText = document.getElementById('lockDemoEventText');
-            const row2 = document.getElementById('animRow2');
-            const r2Badge = document.getElementById('animRow2Badge');
-
-            if (currentLockDemoMode === 'table-x') {
-                logText.innerHTML = '<span class="text-red-500 font-bold">⛔ T2 BLOCKED AT GATES!</span> T2 wanted to access Row 2, but the entire table is closed by T1! T2 is forced into wait queue ⏳.';
-            } else if (currentLockDemoMode === 'row-x') {
-                row2.classList.add('border-2', 'border-emerald-500', 'bg-emerald-500/10');
-                r2Badge.innerText = '✅ Granted to T2';
-                r2Badge.className = 'px-3 py-1 rounded-full clay-pill text-xs font-mono font-bold text-emerald-500';
-                logText.innerHTML = '<span class="text-emerald-500 font-bold">✅ T2 GRANTED IMMEDIATELY!</span> T1 only locked Row 1, so T2 accessed Row 2 concurrently with 0ms delay! This is the power of Row-Level Locking.';
-            } else if (currentLockDemoMode === 'row-s') {
-                logText.innerHTML = '<span class="text-emerald-500 font-bold">✅ T2 GRANTED!</span> T2 requested a read. Since T1 only holds a Shared Lock, readers coexist without blocking.';
-            } else {
-                logText.innerHTML = '<span class="text-emerald-500 font-bold">✅ T2 GRANTED!</span> Table is free.';
-            }
-        }
-
-        // Section 6: MVCC vs Locking Animated Comparison
-        function runMvccComparisonAnim() {
-            const lockDoor = document.getElementById('lockAnimDoor');
-            const lockT1 = document.getElementById('lockAnimT1');
-            const lockT2 = document.getElementById('lockAnimT2');
-            const lockBadge = document.getElementById('lockAnimBadge');
-            const lockNote = document.getElementById('lockAnimNote');
-
-            const mvccT1 = document.getElementById('mvccAnimT1');
-            const mvccT2 = document.getElementById('mvccAnimT2');
-            const mvccBadge = document.getElementById('mvccAnimBadge');
-            const mvccV1 = document.getElementById('mvccV1Bubble');
-            const mvccV2 = document.getElementById('mvccV2Bubble');
-            const mvccNote = document.getElementById('mvccAnimNote');
-
-            // Step 1: T1 writes
-            lockT1.innerText = 'T1: Modifying row (Acquiring X-Lock)...';
-            lockDoor.innerText = '🔒';
-            lockDoor.classList.add('border-red-500');
-            lockBadge.innerText = 'Locked by T1';
-            lockBadge.className = 'text-xs px-2.5 py-0.5 rounded-full clay-pill font-bold text-red-500';
-
-            mvccT1.innerText = 'T1: Modifying row (creating Version 2)...';
-            mvccV2.classList.remove('opacity-25');
-            mvccV2.classList.add('border-purple-500');
-            mvccBadge.innerText = 'Active V2 Creation';
-            mvccBadge.className = 'text-xs px-2.5 py-0.5 rounded-full clay-pill font-bold text-purple-500';
-
-            // Step 2: T2 requests read
-            setTimeout(() => {
-                // Locking side: Blocked!
-                lockT2.innerText = 'T2: Requesting Read (SELECT)... ⛔ BLOCKED!';
-                lockT2.classList.add('text-red-500');
-                lockNote.innerText = 'Pessimistic Locking: T2 is completely blocked waiting for T1 to commit! (Wait Time: 450ms...)';
-
-                // MVCC side: Instant read from V1!
-                mvccT2.innerText = 'T2: Requesting Read ➔ Reads Snapshot V1 instantly! 🚀';
-                mvccT2.classList.add('text-emerald-500');
-                mvccV1.classList.add('border-emerald-500', 'scale-105');
-                mvccNote.innerText = 'MVCC Engine: T2 reads committed Version 1 immediately from Undo Log without waiting! (Wait Time: 0ms)';
-            }, 1200);
-
-            // Step 3: T1 commits
-            setTimeout(() => {
-                lockT1.innerText = 'T1: COMMIT completed ➔ Lock Released';
-                lockDoor.innerText = '🔓';
-                lockDoor.classList.remove('border-red-500');
-                lockT2.innerText = 'T2: Finally unblocked after delay.';
-                lockT2.classList.remove('text-red-500');
-
-                mvccT1.innerText = 'T1: COMMIT completed (V2 is now official)';
-                mvccV2.classList.add('bg-emerald-500/10');
-            }, 3200);
-        }
-
-        // Section 7: WAL Sync Mode
+// Section 7: WAL Sync Mode
         function setWalMode(mode) {
             const btnSync = document.getElementById('btnWalSync');
             const btnAsync = document.getElementById('btnWalAsync');
@@ -1676,7 +2398,7 @@
             renderTimelineSteps();
             selectIsoLevel(2);
             setWalMode('sync');
-            setLockDemoMode('table-x');
+            resetLab();
         });
     </script>
 </body>

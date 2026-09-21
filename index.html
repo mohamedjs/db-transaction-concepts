@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TechVault Transactions & ACID Internals | Claymorphism Edition</title>
+    <title>Database Transactions & ACID Internals | Interactive Guide</title>
     
     <!-- Google Fonts: Tajawal & IBM Plex Sans Arabic -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -141,8 +141,8 @@
             transition: background-color 0.4s ease, box-shadow 0.4s ease;
         }
 
-        /* Axnos characteristic highlighter style */
-        .axnos-highlight {
+        /* Standard text highlighter style */
+        .text-highlight {
             background-color: #C4B5FD;
             color: #0B0D17;
             padding: 0.15rem 0.6rem;
@@ -190,14 +190,14 @@
             <div class="flex items-center gap-3">
                 <a href="#hero" class="flex items-center gap-3 group">
                     <div class="w-12 h-12 rounded-2xl clay-btn-purple flex items-center justify-center font-mono font-black text-xl tracking-wider">
-                        AX
+                        DB
                     </div>
                     <div class="flex flex-col">
                         <div class="flex items-center gap-2">
-                            <span class="text-xl font-extrabold tracking-tight font-sans" style="color: var(--clay-text-primary)">Axnos</span>
-                            <span class="text-[11px] px-2.5 py-0.5 rounded-full clay-pill font-semibold text-purple-600 dark:text-axLavender">TechVault</span>
+                            <span class="text-xl font-extrabold tracking-tight font-sans" style="color: var(--clay-text-primary)">Database Internals</span>
+                            <span class="text-[11px] px-2.5 py-0.5 rounded-full clay-pill font-semibold text-purple-600 dark:text-axLavender">ACID & Concurrency</span>
                         </div>
-                        <span class="text-[11px]" style="color: var(--clay-text-muted)" data-en="Relational DB Internals" data-ar="هندسة قواعد البيانات العلائقية">هندسة قواعد البيانات العلائقية</span>
+                        <span class="text-[11px]" style="color: var(--clay-text-muted)" data-en="Relational DB Transactions" data-ar="معاملات قواعد البيانات العلائقية">معاملات قواعد البيانات العلائقية</span>
                     </div>
                 </a>
             </div>
@@ -231,12 +231,12 @@
                 <!-- Code Lab Pill CTA -->
                 <a href="#codelab" class="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full clay-pill text-xs font-bold text-purple-600 dark:text-axLavender">
                     <span class="font-mono">&lt;/&gt;</span>
-                    <span data-en="Code Lab" data-ar="كود لاب">كود لاب</span>
+                    <span data-en="SQL Code" data-ar="أكواد SQL">أكواد SQL</span>
                 </a>
 
-                <!-- Main CTA (Axnos "كمّل مذاكرتك" Puffed Clay Button) -->
+                <!-- Main CTA -->
                 <a href="#concurrency" class="clay-btn-purple px-5 py-2.5 font-bold text-sm flex items-center gap-2">
-                    <span data-en="Interactive Sim" data-ar="كمّل مذاكرتك">كمّل مذاكرتك</span>
+                    <span data-en="Interactive Sim" data-ar="المحاكي التفاعلي">المحاكي التفاعلي</span>
                     <svg class="w-4 h-4 rtl:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                 </a>
             </div>
@@ -247,32 +247,32 @@
     <!-- Main Content Container -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-24">
 
-        <!-- HERO SECTION (Claymorphism Edition) -->
+        <!-- HERO SECTION -->
         <section id="hero" class="relative pt-6 pb-12 flex flex-col items-center text-center">
             
             <!-- Top Badge Pill -->
             <div class="inline-flex items-center gap-2 px-5 py-2 rounded-full clay-pill text-xs font-semibold mb-6">
                 <span class="w-2.5 h-2.5 rounded-full bg-purple-500 animate-pulse"></span>
-                <span class="text-purple-600 dark:text-axLavender font-bold" data-en="TechVault Series • Transactions Part 1" data-ar="سلسلة TechVault • الجزء الأول من الـ Transactions">سلسلة TechVault • الجزء الأول من الـ Transactions</span>
+                <span class="text-purple-600 dark:text-axLavender font-bold" data-en="Database Systems Architecture" data-ar="هندسة أنظمة قواعد البيانات">هندسة أنظمة قواعد البيانات</span>
                 <span class="text-slate-400">•</span>
-                <span data-en="Claymorphism 3D Edition" data-ar="مذاكرة بطعم تاني">مذاكرة بطعم تاني</span>
+                <span data-en="Transactions, ACID & Concurrency Guide" data-ar="دليل المعاملات و ACID والتزامن">دليل المعاملات و ACID والتزامن</span>
             </div>
 
-            <!-- Big Headline with Axnos-style Highlighter -->
+            <!-- Headline -->
             <h1 class="text-4xl sm:text-6xl font-black tracking-tight leading-tight max-w-4xl mb-6" style="color: var(--clay-text-primary)">
-                <span data-en="Master Database Transactions" data-ar="ذاكر الـ Transactions وإنت">ذاكر الـ Transactions وإنت</span>
-                <span class="axnos-highlight" data-en="Confident" data-ar="مبسوط">مبسوط</span>
+                <span data-en="Database Transactions &" data-ar="معاملات قواعد البيانات وخصائص">معاملات قواعد البيانات وخصائص</span>
+                <span class="text-highlight" data-en="ACID Internals" data-ar="ACID بالتفصيل">ACID بالتفصيل</span>
             </h1>
 
-            <p class="text-base sm:text-xl max-w-3xl leading-relaxed mb-10" style="color: var(--clay-text-secondary)" data-en="Comprehensive visual guide to Database Transactions, ACID properties, Concurrency anomalies, Isolation levels, Locking mechanisms, and MVCC — modeled directly from the TechVault series." data-ar="شرح مرئي وتفاعلي شامل لمعاملات قواعد البيانات (ACID)، ومشاكل التزامن بالتوقيت الزمني الدقيق لـ T1 و T2، ومستويات العزل، والـ Locking، ومحركات MVCC كما تم تفصيلها في محاضرة TechVault.">
-                شرح مرئي وتفاعلي شامل لمعاملات قواعد البيانات (ACID)، ومشاكل التزامن بالتوقيت الزمني الدقيق لـ T1 و T2، ومستويات العزل، والـ Locking، ومحركات MVCC كما تم تفصيلها في محاضرة TechVault.
+            <p class="text-base sm:text-xl max-w-3xl leading-relaxed mb-10" style="color: var(--clay-text-secondary)" data-en="Comprehensive visual guide to Database Transactions, ACID properties, Concurrency anomalies (Lost Update, Dirty Read, Non-repeatable Read, Phantom Read), Isolation levels, Locking mechanisms, and MVCC." data-ar="مرجع مرئي وتفاعلي شامل لمعاملات قواعد البيانات (ACID)، ومشاكل التزامن بالتوقيت الزمني الدقيق لـ T1 و T2، ومستويات العزل، وآليات القفل (Locking)، ومحركات تعدد النسخ (MVCC).">
+                مرجع مرئي وتفاعلي شامل لمعاملات قواعد البيانات (ACID)، ومشاكل التزامن بالتوقيت الزمني الدقيق لـ T1 و T2، ومستويات العزل، وآليات القفل (Locking)، ومحركات تعدد النسخ (MVCC).
             </p>
 
-            <!-- Feature Pills (Clay 3D design) -->
+            <!-- Feature Pills -->
             <div class="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mb-10">
                 <div class="flex items-center gap-2 px-4 py-2 rounded-full clay-pill text-sm font-semibold">
                     <span class="w-6 h-6 rounded-full bg-purple-500/20 text-purple-600 dark:text-axLavender flex items-center justify-center text-xs font-bold">✓</span>
-                    <span data-en="Clear visual explanations" data-ar="شرح واضح بالأمثلة الحية">شرح واضح بالأمثلة الحية</span>
+                    <span data-en="Step-by-step Execution Flow" data-ar="شرح خطوات العمليات">شرح خطوات العمليات</span>
                 </div>
                 <div class="flex items-center gap-2 px-4 py-2 rounded-full clay-pill text-sm font-semibold">
                     <span class="w-6 h-6 rounded-full bg-amber-500/20 text-amber-500 flex items-center justify-center text-xs font-bold">⚡</span>
@@ -284,13 +284,13 @@
                 </div>
             </div>
 
-            <!-- Quick Action Buttons -->
+            <!-- Action Buttons -->
             <div class="flex flex-wrap items-center justify-center gap-4">
                 <a href="#intro" class="clay-btn-purple px-8 py-3.5 font-bold text-base">
-                    <span data-en="Start Learning (Slide by Slide)" data-ar="ابدأ الشرح خطوة بخطوة 🚀">ابدأ الشرح خطوة بخطوة 🚀</span>
+                    <span data-en="Start Exploring" data-ar="ابدأ القراءة 📖">ابدأ القراءة 📖</span>
                 </a>
                 <a href="#concurrency" class="clay-btn-neutral px-8 py-3.5 font-bold text-base">
-                    <span data-en="Jump to Timeline Simulator" data-ar="محاكي مشاكل التزامن 🎮">محاكي مشاكل التزامن 🎮</span>
+                    <span data-en="Concurrency Simulator" data-ar="محاكي مشاكل التزامن 🎮">محاكي مشاكل التزامن 🎮</span>
                 </a>
             </div>
 
@@ -321,7 +321,7 @@
                         <div class="flex items-center justify-between mb-6">
                             <h3 class="text-xl font-bold flex items-center gap-2" style="color: var(--clay-text-primary)">
                                 <span class="text-purple-600 dark:text-axLavender font-mono">Pay(amount)</span>
-                                <span class="text-xs px-3 py-1 rounded-full clay-pill" data-en="TechVault Slide 2 Example" data-ar="مثال Slide 2 من الـ PDF">مثال Slide 2 من الـ PDF</span>
+                                <span class="text-xs px-3 py-1 rounded-full clay-pill" data-en="Payment Operation Flow" data-ar="خطوات عملية الدفع">خطوات عملية الدفع</span>
                             </h3>
                             <div class="text-sm font-semibold" style="color: var(--clay-text-secondary)">
                                 <span data-en="Initial Balance:" data-ar="الرصيد الأولي:">الرصيد الأولي:</span>
@@ -394,7 +394,7 @@
                 <div class="lg:col-span-5 clay-card p-6 sm:p-8 flex flex-col justify-between">
                     <div>
                         <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full clay-pill text-red-500 text-xs font-bold mb-4">
-                            <span>⚠️ المشكلة الكبرى (Slide 6)</span>
+                            <span>⚠️ تعارض التزامن (Concurrency Conflict)</span>
                         </div>
                         <h3 class="text-2xl font-bold mb-4" style="color: var(--clay-text-primary)" data-en="Concurrent Payments: Pay(50) & Pay(30)" data-ar="ماذا لو حدثت عمليتان في نفس اللحظة؟">ماذا لو حدثت عمليتان في نفس اللحظة؟</h3>
                         <p class="text-sm leading-relaxed mb-6" style="color: var(--clay-text-secondary)" data-en="If two transactions read Balance = 200 simultaneously without isolation, both will succeed, one writing 150 and the other writing 170. One update overwrites the other!" data-ar="لو قام عميلان بالدفع في نفس اللحظة (Pay 50 و Pay 30) من رصيد 200: كل منهما سيقرأ 200! الأول يحسب الرصيد 150 والآخر يحسبه 170. النتيجة: رصيد خاطئ وضياع إحدى العمليتين تماماً!">
@@ -429,7 +429,7 @@
             <div id="codelab" class="clay-card p-6 sm:p-8">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                     <div>
-                        <div class="text-xs font-bold text-purple-600 dark:text-axLavender font-mono mb-1">&lt;/&gt; CODE LAB • TECHVAULT SLIDE 5</div>
+                        <div class="text-xs font-bold text-purple-600 dark:text-axLavender font-mono mb-1">&lt;/&gt; SQL IMPLEMENTATION • REAL DATABASE CODE</div>
                         <h3 class="text-2xl font-bold" style="color: var(--clay-text-primary)" data-en="Bank Transfer in SQL: MySQL vs PostgreSQL" data-ar="كود التحويل البنكي بلغة SQL: مقارنة MySQL مع PostgreSQL">كود التحويل البنكي بلغة SQL: مقارنة MySQL مع PostgreSQL</h3>
                     </div>
                     <!-- Tab Buttons -->
@@ -1156,11 +1156,11 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-2xl clay-btn-purple flex items-center justify-center font-mono font-bold text-sm">
-                    AX
+                    DB
                 </div>
                 <div>
-                    <div class="font-bold text-sm" style="color: var(--clay-text-primary)">Axnos TechVault Interactive Guide</div>
-                    <div class="text-xs" style="color: var(--clay-text-muted)">Based on TechVault Transactions Part 1 by Ahmed Elhelw</div>
+                    <div class="font-bold text-sm" style="color: var(--clay-text-primary)">Database Transactions & ACID Internals</div>
+                    <div class="text-xs" style="color: var(--clay-text-muted)">Educational guide on Relational Database Internals & Concurrency Control</div>
                 </div>
             </div>
 

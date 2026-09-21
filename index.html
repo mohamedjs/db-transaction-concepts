@@ -1,492 +1,1546 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Database Transaction Concepts</title>
+    <title>TechVault Transactions & ACID Internals | Axnos Style</title>
+    
+    <!-- Google Fonts: Tajawal & IBM Plex Sans Arabic -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Tajawal:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        brutalBg: '#FFFBEB',
-                        brutalYellow: '#FFD600',
-                        brutalPink: '#FF6B9D',
-                        brutalBlue: '#4ECDC4',
-                        brutalGreen: '#A8E6CF',
-                        brutalOrange: '#FF8A5C',
-                        brutalPurple: '#C490E4',
-                    },
-                    boxShadow: {
-                        brutal: '4px 4px 0px 0px rgba(0,0,0,1)',
-                        brutalHover: '2px 2px 0px 0px rgba(0,0,0,1)',
-                        brutalActive: '0px 0px 0px 0px rgba(0,0,0,1)',
+                        axDark: '#0B0D17',
+                        axCard: '#131625',
+                        axCardHover: '#1A1E32',
+                        axBorder: '#232840',
+                        axLavender: '#C4B5FD',
+                        axPurple: '#8B5CF6',
+                        axDeepPurple: '#6D28D9',
+                        axCyan: '#38BDF8',
+                        axGreen: '#34D399',
+                        axRed: '#F87171',
+                        axAmber: '#FBBF24',
                     },
                     fontFamily: {
-                        brutal: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace'],
-                        brutalSans: ['"Archivo Black"', 'Impact', 'sans-serif'],
+                        arabic: ['"Tajawal"', '"IBM Plex Sans Arabic"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    boxShadow: {
+                        'axGlow': '0 0 35px -5px rgba(139, 92, 246, 0.25)',
+                        'axCard': '0 10px 30px -10px rgba(0, 0, 0, 0.5)',
                     }
                 }
             }
         }
     </script>
+
     <style>
         body {
-            font-family: 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace';
-            background-color: #FFFBEB;
-            color: #000;
+            font-family: 'Tajawal', 'IBM Plex Sans Arabic', sans-serif;
+            background-color: #0B0D17;
+            color: #E2E8F0;
+            overflow-x: hidden;
         }
 
-        body[dir="rtl"] {
-            font-family: 'Courier New', 'Tahoma', 'monospace';
+        /* Axnos characteristic highlighter style */
+        .axnos-highlight {
+            background-color: #C4B5FD;
+            color: #0B0D17;
+            padding: 0.1rem 0.5rem;
+            border-radius: 0.375rem;
+            display: inline-block;
+            font-weight: 800;
         }
 
-        .brutal-border {
-            border: 3px solid #000;
+        /* Glassmorphic elements */
+        .glass-nav {
+            background: rgba(11, 13, 23, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
         }
 
-        .tab-content {
-            display: none;
-            animation: slideUp 0.3s ease-out forwards;
+        .glass-card {
+            background: rgba(19, 22, 37, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        .tab-content.active {
-            display: block;
+        .glass-card:hover {
+            border-color: rgba(167, 139, 250, 0.3);
         }
 
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        /* Scrollbar custom */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0B0D17;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #232840;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #8B5CF6;
         }
 
-        /* --- Animations CSS --- */
-        .anim-container {
-            height: 250px;
-            background: #fff;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
+        /* Pulse animations */
+        @keyframes subtlePulse {
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
+        .glow-sphere {
+            animation: subtlePulse 8s ease-in-out infinite;
         }
 
-        /* Atomicity */
-        .atom-box { width: 80px; height: 60px; background: #fff; border: 3px solid #000; display: flex; flex-direction: column; align-items: center; justify-content: center; position: absolute; font-weight: bold; box-shadow: 4px 4px 0px #000;}
-        .atom-a { left: 10%; }
-        .atom-b { right: 10%; }
-        .atom-money { width: 30px; height: 20px; background: #A8E6CF; border: 3px solid #000; position: absolute; top: 50%; left: 30%; transform: translateY(-50%); opacity: 0; }
-        .atom-lightning { font-size: 2.5rem; position: absolute; top: 20%; left: 45%; opacity: 0; text-shadow: 2px 2px 0 #000; }
-        .atom-wrapper { position: absolute; border: 4px dashed #4ECDC4; width: 90%; height: 80%; z-index: 0; }
-        
-        .animating .atom-money { animation: atomTransfer 4s infinite; }
-        .animating .atom-lightning { animation: atomStrike 4s infinite; }
-        .animating .atom-val-a { animation: atomValA 4s infinite; }
-        .animating .atom-val-b { animation: atomValB 4s infinite; }
-        .animating .atom-wrapper { animation: atomRollback 4s infinite; }
-
-        @keyframes atomTransfer {
-            0% { opacity: 0; left: 30%; }
-            10% { opacity: 1; left: 30%; }
-            45% { opacity: 1; left: 60%; }
-            50% { opacity: 0; left: 60%; } 
-            60% { opacity: 1; left: 60%; background: #FF6B9D; } 
-            80% { opacity: 1; left: 30%; background: #FF6B9D; }
-            90% { opacity: 0; left: 30%; }
-            100% { opacity: 0; left: 30%; }
+        /* Code tabs transition */
+        .code-block {
+            font-family: 'JetBrains Mono', monospace;
         }
-        @keyframes atomStrike { 0%, 45% { opacity: 0; transform: scale(1); } 50% { opacity: 1; transform: scale(1.5); } 60%, 100% { opacity: 0; } }
-        @keyframes atomValA { 0%, 10% { content: "1000"; } 15%, 75% { content: "900"; } 80%, 100% { content: "1000"; } }
-        @keyframes atomValB { 0%, 100% { content: "500"; } }
-        @keyframes atomRollback { 0%, 49% { border-color: #4ECDC4; } 50%, 100% { border-color: #FF6B9D; } }
-
-        /* Consistency */
-        .cons-item { margin: 5px; padding: 10px; background: #FFD600; border: 3px solid #000; display: flex; justify-content: space-between; width: 80%; opacity: 0; transform: translateX(-20px); box-shadow: 4px 4px 0px #000; font-weight: bold;}
-        .animating .cons-item:nth-child(1) { animation: slideIn 3s infinite; }
-        .animating .cons-item:nth-child(2) { animation: slideIn 3s infinite 0.5s; background: #FF8A5C; }
-        .animating .cons-item:nth-child(3) { animation: slideIn 3s infinite 1s; background: #C490E4; }
-        @keyframes slideIn { 0% { opacity: 0; transform: translateX(-20px); } 10%, 80% { opacity: 1; transform: translateX(0); } 100% { opacity: 0; transform: translateX(20px); } }
-
-        /* Durability */
-        .dur-db { width: 70px; height: 90px; border: 3px solid #000; background: #fff; position: absolute; right: 15%; display: flex; align-items: center; justify-content: center; box-shadow: 4px 4px 0px #000; font-weight: bold;}
-        .dur-wal { width: 70px; height: 40px; border: 3px solid #000; background: #FFD600; position: absolute; left: 15%; display: flex; align-items: center; justify-content: center; font-weight: bold; box-shadow: 4px 4px 0px #000;}
-        .dur-data { width: 20px; height: 20px; background: #4ECDC4; border: 3px solid #000; position: absolute; left: 25%; opacity: 0; }
-        .dur-crash { font-size: 3rem; position: absolute; right: 10%; top: 10%; opacity: 0; text-shadow: 2px 2px 0px #000;}
-        
-        .animating .dur-data { animation: durWrite 4s infinite; }
-        .animating .dur-wal { animation: durWalGlow 4s infinite; }
-        .animating .dur-crash { animation: durCrash 4s infinite; }
-        .animating .dur-db { animation: durDbRecover 4s infinite; }
-
-        @keyframes durWrite { 0% { opacity: 0; left: 10%; } 10% { opacity: 1; left: 10%; } 30% { opacity: 1; left: 30%; } 35% { opacity: 0; } 70% { opacity: 0; left: 30%; } 80% { opacity: 1; left: 30%; } 90% { opacity: 1; left: 70%; } 100% { opacity: 0; } }
-        @keyframes durWalGlow { 0%, 25% { background: #FFD600; } 30%, 60% { background: #A8E6CF; transform: scale(1.1); } 100% { background: #FFD600; } }
-        @keyframes durCrash { 0%, 45% { opacity: 0; } 50% { opacity: 1; transform: scale(1.2); } 60%, 100% { opacity: 0; } }
-        @keyframes durDbRecover { 0%, 49% { border-color: #000; opacity: 1; } 50%, 60% { border-color: #FF6B9D; opacity: 0.5; background: #FF8A5C; } 70%, 100% { border-color: #000; opacity: 1; background: #fff;} }
-
-        /* Concurrency: Dirty Read */
-        .tx-line { width: 80%; height: 4px; background: #000; position: absolute; top: 50%; }
-        .tx-dot { width: 16px; height: 16px; border: 3px solid #000; border-radius: 0; position: absolute; top: -6px; box-shadow: 2px 2px 0px #000;}
-        .tx-a { background: #4ECDC4; } .tx-b { background: #FF6B9D; }
-        .tx-val { position: absolute; top: -35px; font-size: 0.8rem; background: #fff; border: 2px solid #000; padding: 2px 6px; white-space: nowrap; font-weight: bold; box-shadow: 2px 2px 0px #000;}
-        
-        .animating .dr-a-write { animation: drAWrite 5s infinite; }
-        .animating .dr-b-read { animation: drBRead 5s infinite; }
-        .animating .dr-a-roll { animation: drARoll 5s infinite; }
-        @keyframes drAWrite { 0% { left: 10%; opacity: 1; } 20% { left: 30%; opacity: 1; } 60% { left: 30%; opacity: 1; } 65%, 100% { opacity: 0; } }
-        @keyframes drBRead { 0%, 25% { left: 10%; opacity: 0; } 30% { left: 10%; opacity: 1; } 40% { left: 40%; opacity: 1; color: #000; } 60% { left: 40%; opacity: 1; color: #000; } 65%, 90% { left: 40%; opacity: 1; background: #FF6B9D; color: #fff; } 100% { opacity: 0; } }
-        @keyframes drARoll { 0%, 55% { opacity: 0; left: 30%; } 60% { opacity: 1; left: 30%; background: #FF8A5C;} 70%, 100% { opacity: 0; left: 10%; } }
-
-        /* Isolation Slider */
-        .iso-slider-area { flex: 1; display: flex; flex-direction: column; justify-content: space-between; position: relative; padding: 20px 0; }
-        .iso-track { position: absolute; left: 20px; top: 30px; bottom: 30px; width: 6px; background: #000; }
-        body[dir="rtl"] .iso-track { left: auto; right: 20px; }
-        .iso-thumb { position: absolute; left: 10px; width: 26px; height: 26px; background: #A8E6CF; border: 3px solid #000; cursor: pointer; transition: top 0.3s ease; box-shadow: 4px 4px 0px #000; }
-        body[dir="rtl"] .iso-thumb { left: auto; right: 10px; }
-        .iso-level { margin-left: 45px; cursor: pointer; padding: 5px; transition: all 0.3s; font-weight: bold; border: 2px solid transparent;}
-        body[dir="rtl"] .iso-level { margin-left: 0; margin-right: 45px; }
-        .iso-level.active { border-color: #000; background: #FFD600; box-shadow: 2px 2px 0px #000; }
-        .iso-check { opacity: 0.4; transition: all 0.3s; display: flex; align-items: center; gap: 10px; font-weight: bold; padding: 5px; border: 2px solid transparent;}
-        .iso-check.active { opacity: 1; background: #A8E6CF; border-color: #000; box-shadow: 2px 2px 0px #000;}
-
-        /* Locking */
-        .lock-row { width: 60%; height: 50px; border: 3px solid #000; background: #fff; display: flex; align-items: center; justify-content: center; position: relative; margin: 10px; box-shadow: 4px 4px 0px #000; font-weight: bold;}
-        .lock-icon { position: absolute; right: 10px; opacity: 0; transition: 0.3s; font-size: 1.5rem; }
-        .lock-arrow { position: absolute; opacity: 0; font-size: 1.5rem; transition: 0.5s; font-weight: bold; text-shadow: 1px 1px 0px #fff;}
-        
-        .animating .sl-read1 { animation: slRead1 4s infinite; }
-        .animating .sl-read2 { animation: slRead2 4s infinite 0.5s; }
-        .animating .sl-write { animation: slWrite 4s infinite 1.5s; }
-        @keyframes slRead1 { 0% { top: -30px; left: 20%; opacity: 0; } 10%, 80% { top: -10px; left: 20%; opacity: 1; color: #4ECDC4; } 100% { opacity: 0; } }
-        @keyframes slRead2 { 0% { top: 40px; left: 40%; opacity: 0; } 10%, 80% { top: 20px; left: 40%; opacity: 1; color: #4ECDC4; } 100% { opacity: 0; } }
-        @keyframes slWrite { 0% { top: -30px; left: 70%; opacity: 0; } 20% { top: -15px; left: 70%; opacity: 1; color: #FF6B9D; } 30%, 80% { top: -25px; left: 70%; opacity: 1; transform: scale(0.8); } 100% { opacity: 0; } }
-
-        /* MVCC */
-        .mvcc-timeline { width: 80%; height: 6px; background: #000; position: relative; margin-top: 50px; }
-        .mvcc-ver { width: 44px; height: 44px; background: #fff; border: 3px solid #000; position: absolute; display: flex; align-items: center; justify-content: center; top: -19px; font-weight: bold; box-shadow: 4px 4px 0px #000;}
-        .mvcc-tx { position: absolute; padding: 6px 10px; background: #FFD600; border: 3px solid #000; font-size: 0.8rem; font-weight: bold; opacity: 0; transition: 0.5s; box-shadow: 4px 4px 0px #000; white-space: nowrap;}
-        
-        .animating .mvcc-v1 { left: 10%; background: #4ECDC4;}
-        .animating .mvcc-v2 { left: 50%; opacity: 0; animation: mvccV2 6s infinite; background: #C490E4;}
-        .animating .mvcc-t1 { animation: mvccT1 6s infinite; }
-        .animating .mvcc-t2 { animation: mvccT2 6s infinite; }
-        @keyframes mvccV2 { 0%, 30% { opacity: 0; transform: scale(0); } 40%, 100% { opacity: 1; transform: scale(1); } }
-        @keyframes mvccT1 { 0% { opacity: 0; top: 40px; left: 10%; } 10%, 25% { opacity: 1; top: 40px; left: 10%; } 30% { left: 50%; top: 40px; opacity: 1; } 40%, 90% { left: 50%; top: 40px; opacity: 1; background: #A8E6CF; } 100% { opacity: 0; } }
-        @keyframes mvccT2 { 0%, 15% { opacity: 0; top: -50px; left: 10%; } 20%, 50% { opacity: 1; top: -50px; left: 10%; } 60% { left: 50%; top: -50px; opacity: 1; } 70%, 90% { left: 50%; top: -50px; opacity: 1; background: #FF6B9D; text-decoration: line-through; } 100% { opacity: 0; } }
     </style>
 </head>
-<body class="min-h-screen text-black">
+<body class="bg-axDark text-slate-200 antialiased min-h-screen relative selection:bg-purple-500 selection:text-white">
 
-    <header class="flex flex-col md:flex-row justify-between items-center p-6 brutal-border bg-white sticky top-0 z-50 m-4 shadow-brutal">
-        <h1 class="text-2xl font-black uppercase tracking-wider" data-en="Database Transaction Concepts" data-ar="مفاهيم معاملات قواعد البيانات">Database Transaction Concepts</h1>
-        <button class="brutal-border bg-brutalYellow px-4 py-2 font-bold shadow-brutal hover:shadow-brutalHover active:shadow-brutalActive active:translate-y-1 active:translate-x-1 transition-all mt-4 md:mt-0 flex items-center gap-2" onclick="toggleLang()">
-            <span>🌐</span> <span id="lang-text">عربي</span>
-        </button>
+    <!-- Ambient Glowing Spheres (Axnos style background lighting) -->
+    <div class="fixed top-0 left-1/4 w-96 h-96 bg-purple-600/15 rounded-full blur-3xl pointer-events-none glow-sphere"></div>
+    <div class="fixed bottom-1/4 right-10 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-3xl pointer-events-none glow-sphere" style="animation-delay: 4s;"></div>
+
+    <!-- Top Navigation Bar (Axnos Platform Style) -->
+    <header class="sticky top-0 z-50 glass-nav transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+            
+            <!-- Logo & Brand -->
+            <div class="flex items-center gap-3">
+                <a href="#hero" class="flex items-center gap-3 group">
+                    <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-purple-600 to-axLavender p-0.5 shadow-lg shadow-purple-500/20 group-hover:scale-105 transition-transform">
+                        <div class="w-full h-full bg-axDark rounded-[14px] flex items-center justify-center">
+                            <span class="text-axLavender font-black text-xl tracking-wider font-mono">AX</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl font-extrabold tracking-tight text-white font-sans">Axnos</span>
+                            <span class="text-xs px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-axLavender font-medium">TechVault</span>
+                        </div>
+                        <span class="text-[11px] text-slate-400" data-en="Relational DB Internals" data-ar="هندسة قواعد البيانات العلائقية">هندسة قواعد البيانات العلائقية</span>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Desktop Nav Links -->
+            <nav class="hidden lg:flex items-center gap-1.5 p-1 rounded-full bg-slate-900/60 border border-white/5 text-sm">
+                <a href="#intro" class="px-3.5 py-1.5 rounded-full hover:bg-white/5 text-slate-300 hover:text-white transition font-medium" data-en="What is Tx?" data-ar="ما هي المعاملة؟">ما هي المعاملة؟</a>
+                <a href="#acid" class="px-3.5 py-1.5 rounded-full hover:bg-white/5 text-slate-300 hover:text-white transition font-medium" data-en="ACID" data-ar="خصائص ACID">خصائص ACID</a>
+                <a href="#concurrency" class="px-3.5 py-1.5 rounded-full hover:bg-white/5 text-slate-300 hover:text-white transition font-medium" data-en="Concurrency" data-ar="مشاكل التزامن">مشاكل التزامن</a>
+                <a href="#isolation" class="px-3.5 py-1.5 rounded-full hover:bg-white/5 text-slate-300 hover:text-white transition font-medium" data-en="Isolation Levels" data-ar="مستويات العزل">مستويات العزل</a>
+                <a href="#locking" class="px-3.5 py-1.5 rounded-full hover:bg-white/5 text-slate-300 hover:text-white transition font-medium" data-en="Locking" data-ar="آليات القفل">آليات القفل</a>
+                <a href="#mvcc" class="px-3.5 py-1.5 rounded-full hover:bg-white/5 text-slate-300 hover:text-white transition font-medium" data-en="MVCC" data-ar="محرك MVCC">محرك MVCC</a>
+                <a href="#engines" class="px-3.5 py-1.5 rounded-full hover:bg-white/5 text-slate-300 hover:text-white transition font-medium" data-en="Engines" data-ar="مقارنة المحركات">مقارنة المحركات</a>
+            </nav>
+
+            <!-- Actions (Lang switch + Code Lab CTA) -->
+            <div class="flex items-center gap-3">
+                <!-- Language Toggle Button -->
+                <button id="langToggleBtn" onclick="toggleLanguage()" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#181C2E] border border-white/10 text-xs font-semibold text-slate-200 hover:border-purple-400/50 hover:bg-[#20253D] transition">
+                    <span id="langCurrent" class="text-axLavender">عربي</span>
+                    <span class="text-slate-500">|</span>
+                    <span id="langTarget" class="text-slate-400">EN</span>
+                </button>
+
+                <!-- Code Lab Pill CTA -->
+                <a href="#codelab" class="hidden sm:flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/30 text-axLavender hover:bg-purple-500/20 text-xs font-semibold transition">
+                    <span class="font-mono text-purple-400">&lt;/&gt;</span>
+                    <span data-en="Code Lab" data-ar="كود لاب">كود لاب</span>
+                </a>
+
+                <!-- Main CTA (Axnos "كمّل مذاكرتك" Pill) -->
+                <a href="#concurrency" class="flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-[#D8B4FE] to-axLavender text-slate-950 font-bold text-sm shadow-md shadow-purple-950 hover:brightness-110 active:scale-95 transition">
+                    <span data-en="Interactive Sim" data-ar="كمّل مذاكرتك">كمّل مذاكرتك</span>
+                    <svg class="w-4 h-4 rtl:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                </a>
+            </div>
+
+        </div>
     </header>
 
-    <div class="flex flex-wrap gap-4 p-4 mx-4">
-        <button class="tab-btn brutal-border bg-brutalBlue px-4 py-2 font-bold shadow-brutal hover:shadow-brutalHover active:translate-y-1 transition-all text-black" data-tab="acid" data-en="ACID" data-ar="خصائص ACID">ACID</button>
-        <button class="tab-btn brutal-border bg-brutalPink px-4 py-2 font-bold shadow-brutal hover:shadow-brutalHover active:translate-y-1 transition-all text-white" data-tab="concurrency" data-en="Concurrency Problems" data-ar="مشاكل التزامن">Concurrency Problems</button>
-        <button class="tab-btn brutal-border bg-brutalGreen px-4 py-2 font-bold shadow-brutal hover:shadow-brutalHover active:translate-y-1 transition-all text-black" data-tab="isolation" data-en="Isolation Levels" data-ar="مستويات العزل">Isolation Levels</button>
-        <button class="tab-btn brutal-border bg-brutalPurple px-4 py-2 font-bold shadow-brutal hover:shadow-brutalHover active:translate-y-1 transition-all text-white" data-tab="locking" data-en="Locking" data-ar="الأقفال (Locking)">Locking</button>
-        <button class="tab-btn brutal-border bg-brutalOrange px-4 py-2 font-bold shadow-brutal hover:shadow-brutalHover active:translate-y-1 transition-all text-black" data-tab="mvcc" data-en="MVCC" data-ar="MVCC (متعدد الإصدارات)">MVCC</button>
-        <button class="tab-btn brutal-border bg-brutalYellow px-4 py-2 font-bold shadow-brutal hover:shadow-brutalHover active:translate-y-1 transition-all text-black" data-tab="dbs" data-en="MySQL vs Postgres" data-ar="MySQL مقابل Postgres">MySQL vs Postgres</button>
-    </div>
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-24">
 
-    <main class="max-w-7xl mx-auto p-4">
-        <!-- ACID Tab -->
-        <div id="acid" class="tab-content active">
-            <h2 class="text-4xl font-black mb-8 border-b-4 border-black pb-4 uppercase bg-brutalBlue inline-block px-4 shadow-brutal" data-en="ACID Properties" data-ar="خصائص ACID">ACID Properties</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="brutal-border bg-white p-6 shadow-brutal flex flex-col">
-                    <h3 class="text-2xl font-bold mb-4 bg-brutalYellow inline-block px-2 border-2 border-black" data-en="Atomicity" data-ar="الذرية (Atomicity)">Atomicity</h3>
-                    <p class="font-bold mb-6 flex-grow" data-en="All or nothing. A transaction is treated as a single, indivisible unit." data-ar="الكل أو اللاشيء. يتم التعامل مع المعاملة كوحدة واحدة لا تتجزأ.">All or nothing. A transaction is treated as a single, indivisible unit.</p>
-                    <div class="anim-container brutal-border animating">
-                        <div class="atom-wrapper"></div>
-                        <div class="atom-box atom-a">A <br><span class="atom-val-a">1000</span></div>
-                        <div class="atom-box atom-b">B <br><span class="atom-val-b">500</span></div>
-                        <div class="atom-money"></div>
-                        <div class="atom-lightning">⚡</div>
-                        <button class="absolute bottom-2 right-2 rtl:left-2 rtl:right-auto brutal-border bg-brutalPink text-white px-2 py-1 font-bold shadow-brutal text-sm hover:shadow-brutalHover active:translate-y-1" onclick="replay(this)" data-en="Replay" data-ar="إعادة">Replay</button>
+        <!-- HERO SECTION (Axnos Platform Aesthetic) -->
+        <section id="hero" class="relative pt-6 pb-12 flex flex-col items-center text-center">
+            
+            <!-- Top Badge Pill -->
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#181B2D] border border-white/10 text-xs font-medium text-slate-300 mb-6 shadow-sm">
+                <span class="w-2 h-2 rounded-full bg-purple-400 animate-ping"></span>
+                <span class="text-purple-300 font-semibold" data-en="TechVault Series • Transactions Part 1" data-ar="سلسلة TechVault • الجزء الأول من الـ Transactions">سلسلة TechVault • الجزء الأول من الـ Transactions</span>
+                <span class="text-slate-500">•</span>
+                <span class="text-slate-400" data-en="ACID & Internals" data-ar="مذاكرة بطعم تاني">مذاكرة بطعم تاني</span>
+            </div>
+
+            <!-- Big Headline with Axnos-style Highlighter -->
+            <h1 class="text-4xl sm:text-6xl font-black text-white tracking-tight leading-tight max-w-4xl mb-6">
+                <span data-en="Master Database Transactions" data-ar="ذاكر الـ Transactions وإنت">ذاكر الـ Transactions وإنت</span>
+                <span class="axnos-highlight" data-en="Confident" data-ar="مبسوط">مبسوط</span>
+            </h1>
+
+            <p class="text-base sm:text-xl text-slate-400 max-w-3xl leading-relaxed mb-10" data-en="Comprehensive visual guide to Database Transactions, ACID properties, Concurrency anomalies, Isolation levels, Locking mechanisms, and MVCC — modeled directly from the TechVault series." data-ar="شرح مرئي وتفاعلي شامل لمعاملات قواعد البيانات (ACID)، ومشاكل التزامن بالتوقيت الزمني الدقيق لـ T1 و T2، ومستويات العزل، والـ Locking، ومحركات MVCC كما تم تفصيلها في محاضرة TechVault.">
+                شرح مرئي وتفاعلي شامل لمعاملات قواعد البيانات (ACID)، ومشاكل التزامن بالتوقيت الزمني الدقيق لـ T1 و T2، ومستويات العزل، والـ Locking، ومحركات MVCC كما تم تفصيلها في محاضرة TechVault.
+            </p>
+
+            <!-- Feature Pills (from Axnos UI) -->
+            <div class="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mb-10">
+                <div class="flex items-center gap-2 px-4 py-2 rounded-full bg-[#141827] border border-white/5 text-sm text-slate-300">
+                    <span class="w-5 h-5 rounded-full bg-purple-500/20 text-axLavender flex items-center justify-center text-xs">✓</span>
+                    <span data-en="Clear visual explanations" data-ar="شرح واضح بالأمثلة الحية">شرح واضح بالأمثلة الحية</span>
+                </div>
+                <div class="flex items-center gap-2 px-4 py-2 rounded-full bg-[#141827] border border-white/5 text-sm text-slate-300">
+                    <span class="w-5 h-5 rounded-full bg-amber-500/20 text-amber-300 flex items-center justify-center text-xs">⚡</span>
+                    <span data-en="Interactive T1 & T2 Timeline" data-ar="محاكي زمني تفاعلي لـ T1 و T2">محاكي زمني تفاعلي لـ T1 و T2</span>
+                </div>
+                <div class="flex items-center gap-2 px-4 py-2 rounded-full bg-[#141827] border border-white/5 text-sm text-slate-300">
+                    <span class="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-xs">&lt;/&gt;</span>
+                    <span data-en="MySQL & Postgres SQL Code" data-ar="أكواد SQL حقيقية MySQL & Postgres">أكواد SQL حقيقية MySQL & Postgres</span>
+                </div>
+            </div>
+
+            <!-- Quick Action Buttons -->
+            <div class="flex flex-wrap items-center justify-center gap-4">
+                <a href="#intro" class="px-8 py-3.5 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-base shadow-lg shadow-purple-600/25 hover:shadow-purple-600/40 transition">
+                    <span data-en="Start Learning (Slide by Slide)" data-ar="ابدأ الشرح خطوة بخطوة 🚀">ابدأ الشرح خطوة بخطوة 🚀</span>
+                </a>
+                <a href="#concurrency" class="px-8 py-3.5 rounded-full bg-[#181C2E] hover:bg-[#222740] border border-white/10 text-slate-200 font-semibold text-base transition">
+                    <span data-en="Jump to Timeline Simulator" data-ar="محاكي مشاكل التزامن 🎮">محاكي مشاكل التزامن 🎮</span>
+                </a>
+            </div>
+
+        </section>
+
+        <!-- SECTION 1: WHAT IS A TRANSACTION? (TechVault Slides 2 to 6) -->
+        <section id="intro" class="space-y-10">
+            
+            <!-- Section Header -->
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/10 pb-6">
+                <div>
+                    <div class="inline-flex items-center gap-2 text-xs font-semibold text-axLavender uppercase tracking-wider mb-2">
+                        <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+                        <span data-en="Module 01 • The Core Concept" data-ar="الوحدة الأولى • المفهوم الأساسي">الوحدة الأولى • المفهوم الأساسي</span>
+                    </div>
+                    <h2 class="text-3xl sm:text-4xl font-black text-white" data-en="What is a Database Transaction?" data-ar="ما هي المعاملة في قواعد البيانات؟ (Transaction)">ما هي المعاملة في قواعد البيانات؟ (Transaction)</h2>
+                </div>
+                <p class="text-slate-400 text-sm max-w-md" data-en="A sequence of Read and Write operations on DB objects treated as a single logical unit." data-ar="سلسلة من عمليات القراءة (Read) والكتابة (Write) على بيانات الـ DB يتم تنفيذها كوحدة واحدة.">
+                    سلسلة من عمليات القراءة (Read) والكتابة (Write) على بيانات الـ DB يتم تنفيذها كوحدة واحدة.
+                </p>
+            </div>
+
+            <!-- Real-World Payment Flow (TechVault PDF Slide 2 & 3) -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+                
+                <!-- Left: Interactive Flow Simulator -->
+                <div class="lg:col-span-7 glass-card rounded-3xl p-6 sm:p-8 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                                <span class="text-purple-400 font-mono">Pay(amount)</span>
+                                <span class="text-xs px-2.5 py-1 rounded-full bg-purple-500/10 text-axLavender border border-purple-500/20" data-en="TechVault Slide 2 Example" data-ar="مثال Slide 2 من الـ PDF">مثال Slide 2 من الـ PDF</span>
+                            </h3>
+                            <div class="text-sm font-semibold text-slate-400">
+                                <span data-en="Initial Balance:" data-ar="الرصيد الأولي:">الرصيد الأولي:</span>
+                                <span class="text-emerald-400 font-mono text-base font-bold">$200</span>
+                            </div>
+                        </div>
+
+                        <!-- Step by Step Visualizer -->
+                        <div class="space-y-3 font-mono text-sm" id="payStepsContainer">
+                            <div class="pay-step flex items-center justify-between p-3.5 rounded-2xl bg-[#0F121E] border border-white/5 transition-all duration-300" id="step-read">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-6 h-6 rounded-full bg-slate-800 text-xs flex items-center justify-center text-slate-400 font-bold">1</span>
+                                    <span class="text-slate-300">Read (balance)</span>
+                                </div>
+                                <span class="text-slate-400 text-xs" data-en="balance = 200" data-ar="تمت قراءة الرصيد: 200">200</span>
+                            </div>
+
+                            <div class="pay-step flex items-center justify-between p-3.5 rounded-2xl bg-[#0F121E] border border-white/5 transition-all duration-300" id="step-check">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-6 h-6 rounded-full bg-slate-800 text-xs flex items-center justify-center text-slate-400 font-bold">2</span>
+                                    <span class="text-slate-300">Check (balance >= amount)</span>
+                                </div>
+                                <span class="text-emerald-400 text-xs font-bold" data-en="200 >= 50 ? TRUE" data-ar="200 >= 50 ? صحيح">200 &gt;= 50 ✓</span>
+                            </div>
+
+                            <div class="pay-step flex items-center justify-between p-3.5 rounded-2xl bg-[#0F121E] border border-white/5 transition-all duration-300" id="step-sub">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-6 h-6 rounded-full bg-slate-800 text-xs flex items-center justify-center text-slate-400 font-bold">3</span>
+                                    <span class="text-slate-300">balance = balance - amount</span>
+                                </div>
+                                <span class="text-purple-300 text-xs" data-en="200 - 50 = 150" data-ar="200 - 50 = 150">150</span>
+                            </div>
+
+                            <div class="pay-step flex items-center justify-between p-3.5 rounded-2xl bg-[#0F121E] border border-white/5 transition-all duration-300" id="step-vendor">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-6 h-6 rounded-full bg-slate-800 text-xs flex items-center justify-center text-slate-400 font-bold">4</span>
+                                    <span class="text-slate-300">Pay amount to vendor</span>
+                                </div>
+                                <span class="text-amber-300 text-xs" data-en="Sent $50 to vendor" data-ar="إرسال 50 للبائع">إرسال 50$</span>
+                            </div>
+
+                            <div class="pay-step flex items-center justify-between p-3.5 rounded-2xl bg-[#0F121E] border border-white/5 transition-all duration-300" id="step-write">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-6 h-6 rounded-full bg-slate-800 text-xs flex items-center justify-center text-slate-400 font-bold">5</span>
+                                    <span class="text-slate-300">Write (balance)</span>
+                                </div>
+                                <span class="text-emerald-400 text-xs font-bold" data-en="DB Updated: $150" data-ar="حفظ الرصيد الجديد: 150$">حفظ 150$</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step Controls -->
+                    <div class="mt-8 pt-6 border-t border-white/10 flex items-center justify-between flex-wrap gap-4">
+                        <div class="flex items-center gap-3">
+                            <button onclick="runPaySimulation()" class="px-5 py-2 rounded-full bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition flex items-center gap-2">
+                                <span>▶ تشغيل الخطوات</span>
+                            </button>
+                            <button onclick="resetPaySimulation()" class="px-4 py-2 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition">
+                                <span>إعادة ضبط ↺</span>
+                            </button>
+                        </div>
+                        <div class="text-xs text-slate-400">
+                            <span data-en="Resulting Balance:" data-ar="الرصيد النهائي:">الرصيد النهائي:</span>
+                            <span id="currentBalanceDisplay" class="text-white font-mono font-bold text-sm">$200</span>
+                        </div>
                     </div>
                 </div>
-                <div class="brutal-border bg-white p-6 shadow-brutal flex flex-col">
-                    <h3 class="text-2xl font-bold mb-4 bg-brutalYellow inline-block px-2 border-2 border-black" data-en="Consistency" data-ar="الاتساق (Consistency)">Consistency</h3>
-                    <p class="font-bold mb-6 flex-grow" data-en="Ensures the database remains in a valid state before and after the transaction." data-ar="يضمن بقاء قاعدة البيانات في حالة صالحة قبل وبعد المعاملة.">Ensures the database remains in a valid state before and after the transaction.</p>
-                    <div class="anim-container brutal-border animating flex-col">
-                        <div class="cons-item"><span>Data Type Check</span> <span>✅</span></div>
-                        <div class="cons-item"><span>Foreign Key Check</span> <span>✅</span></div>
-                        <div class="cons-item"><span>Unique Constraint</span> <span>✅</span></div>
-                        <button class="absolute bottom-2 right-2 rtl:left-2 rtl:right-auto brutal-border bg-brutalPink text-white px-2 py-1 font-bold shadow-brutal text-sm hover:shadow-brutalHover active:translate-y-1" onclick="replay(this)" data-en="Replay" data-ar="إعادة">Replay</button>
+
+                <!-- Right: The Concurrency Conflict (Slide 6) -->
+                <div class="lg:col-span-5 glass-card rounded-3xl p-6 sm:p-8 flex flex-col justify-between border-purple-500/20">
+                    <div>
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-semibold mb-4">
+                            <span>⚠️ المشكلة الكبرى (Slide 6)</span>
+                        </div>
+                        <h3 class="text-2xl font-bold text-white mb-4" data-en="Concurrent Payments: Pay(50) & Pay(30)" data-ar="ماذا لو حدثت عمليتان في نفس اللحظة؟">ماذا لو حدثت عمليتان في نفس اللحظة؟</h3>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-6" data-en="If two transactions read Balance = 200 simultaneously without isolation, both will succeed, one writing 150 and the other writing 170. One update overwrites the other!" data-ar="لو قام عميلان بالدفع في نفس اللحظة (Pay 50 و Pay 30) من رصيد 200: كل منهما سيقرأ 200! الأول يحسب الرصيد 150 والآخر يحسبه 170. النتيجة: رصيد خاطئ وضياع إحدى العمليتين تماماً!">
+                            لو قام عميلان بالدفع في نفس اللحظة (Pay 50 و Pay 30) من رصيد 200: كل منهما سيقرأ 200! الأول يحسب الرصيد 150 والآخر يحسبه 170. النتيجة: رصيد خاطئ وضياع إحدى العمليتين تماماً!
+                        </p>
+
+                        <!-- Visual clash box -->
+                        <div class="p-4 rounded-2xl bg-[#0E111C] border border-red-500/20 space-y-3 font-mono text-xs">
+                            <div class="flex justify-between items-center text-slate-400">
+                                <span>T1: Pay(50)</span>
+                                <span class="text-purple-400">Reads 200 → Writes 150</span>
+                            </div>
+                            <div class="flex justify-between items-center text-slate-400">
+                                <span>T2: Pay(30)</span>
+                                <span class="text-cyan-400">Reads 200 → Writes 170</span>
+                            </div>
+                            <div class="pt-2 border-t border-white/5 flex justify-between items-center text-red-400 font-bold">
+                                <span>Actual DB State:</span>
+                                <span>170$ (50$ payment vanished!)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t border-white/10 text-xs text-slate-400">
+                        <span class="text-axLavender font-bold">💡 الحل:</span> تطبيق قواعد المعاملات (ACID) وآليات العزل (Isolation Levels) للتحكم في التزامن.
                     </div>
                 </div>
-                <div class="brutal-border bg-white p-6 shadow-brutal flex flex-col">
-                    <h3 class="text-2xl font-bold mb-4 bg-brutalYellow inline-block px-2 border-2 border-black" data-en="Isolation" data-ar="العزل (Isolation)">Isolation</h3>
-                    <p class="font-bold mb-6 flex-grow" data-en="Concurrent transactions don't interfere with each other. (See Isolation tab)" data-ar="المعاملات المتزامنة لا تتداخل مع بعضها البعض. (انظر تبويب العزل)">Concurrent transactions don't interfere with each other. (See Isolation tab)</p>
-                    <div class="anim-container brutal-border bg-brutalGreen">
-                        <div class="text-7xl">🛡️</div>
+
+            </div>
+
+            <!-- CODE LAB: Real SQL Implementation from Slide 5 -->
+            <div id="codelab" class="glass-card rounded-3xl p-6 sm:p-8">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <div class="text-xs font-semibold text-purple-400 font-mono mb-1">&lt;/&gt; CODE LAB • TECHVAULT SLIDE 5</div>
+                        <h3 class="text-2xl font-bold text-white" data-en="Bank Transfer in SQL: MySQL vs PostgreSQL" data-ar="كود التحويل البنكي بلغة SQL: مقارنة MySQL مع PostgreSQL">كود التحويل البنكي بلغة SQL: مقارنة MySQL مع PostgreSQL</h3>
+                    </div>
+                    <!-- Tab Buttons -->
+                    <div class="flex items-center gap-2 p-1 rounded-2xl bg-[#0E111C] border border-white/10">
+                        <button id="btnTabMysql" onclick="switchSqlTab('mysql')" class="px-4 py-1.5 rounded-xl bg-purple-600 text-white text-xs font-bold transition">MySQL</button>
+                        <button id="btnTabPg" onclick="switchSqlTab('pg')" class="px-4 py-1.5 rounded-xl text-slate-400 hover:text-white text-xs font-bold transition">PostgreSQL</button>
                     </div>
                 </div>
-                <div class="brutal-border bg-white p-6 shadow-brutal flex flex-col">
-                    <h3 class="text-2xl font-bold mb-4 bg-brutalYellow inline-block px-2 border-2 border-black" data-en="Durability" data-ar="المتانة (Durability)">Durability</h3>
-                    <p class="font-bold mb-6 flex-grow" data-en="Once committed, data is saved permanently, even if the system crashes." data-ar="بمجرد التأكيد، يتم حفظ البيانات بشكل دائم، حتى لو تعطل النظام.">Once committed, data is saved permanently, even if the system crashes.</p>
-                    <div class="anim-container brutal-border animating">
-                        <div class="dur-wal">WAL</div>
-                        <div class="dur-db">DB</div>
-                        <div class="dur-data"></div>
-                        <div class="dur-crash">💥</div>
-                        <button class="absolute bottom-2 right-2 rtl:left-2 rtl:right-auto brutal-border bg-brutalPink text-white px-2 py-1 font-bold shadow-brutal text-sm hover:shadow-brutalHover active:translate-y-1" onclick="replay(this)" data-en="Replay" data-ar="إعادة">Replay</button>
+
+                <!-- MySQL Code Block -->
+                <div id="codeMysql" class="code-block p-5 rounded-2xl bg-[#0B0D17] border border-white/10 text-xs sm:text-sm text-slate-200 overflow-x-auto">
+<pre class="text-slate-300 leading-relaxed"><span class="text-purple-400 font-bold">START TRANSACTION;</span>
+
+<span class="text-slate-500">-- 1. Read source account balance</span>
+<span class="text-cyan-400">SET</span> @source_balance = (<span class="text-cyan-400">SELECT</span> balance <span class="text-cyan-400">FROM</span> accounts <span class="text-cyan-400">WHERE</span> account_id = 1);
+<span class="text-cyan-400">SET</span> @transfer_amount = 100.00;
+
+<span class="text-slate-500">-- 2. Validate balance</span>
+<span class="text-purple-400">IF</span> @source_balance &lt; @transfer_amount <span class="text-purple-400">THEN</span>
+    <span class="text-red-400 font-bold">ROLLBACK;</span>  <span class="text-slate-500">-- Abort and undo all operations</span>
+<span class="text-purple-400">ELSE</span>
+    <span class="text-slate-500">-- 3. Deduct from source and credit target</span>
+    <span class="text-cyan-400">UPDATE</span> accounts <span class="text-cyan-400">SET</span> balance = balance - @transfer_amount <span class="text-cyan-400">WHERE</span> account_id = 1;
+    <span class="text-cyan-400">UPDATE</span> accounts <span class="text-cyan-400">SET</span> balance = balance + @transfer_amount <span class="text-cyan-400">WHERE</span> account_id = 2;
+    <span class="text-emerald-400 font-bold">COMMIT;</span>    <span class="text-slate-500">-- Permanently save changes to disk</span>
+<span class="text-purple-400">END IF;</span></pre>
+                </div>
+
+                <!-- PostgreSQL Code Block -->
+                <div id="codePg" class="code-block p-5 rounded-2xl bg-[#0B0D17] border border-white/10 text-xs sm:text-sm text-slate-200 overflow-x-auto hidden">
+<pre class="text-slate-300 leading-relaxed"><span class="text-purple-400 font-bold">DO</span> $$
+<span class="text-purple-400 font-bold">DECLARE</span>
+    source_balance <span class="text-cyan-400">DECIMAL</span>(10, 2);
+    transfer_amount <span class="text-cyan-400">DECIMAL</span>(10, 2) := 100.00;
+<span class="text-purple-400 font-bold">BEGIN</span>
+    <span class="text-slate-500">-- 1. Read source account balance</span>
+    <span class="text-cyan-400">SELECT</span> balance <span class="text-cyan-400">INTO</span> source_balance 
+    <span class="text-cyan-400">FROM</span> accounts 
+    <span class="text-cyan-400">WHERE</span> account_id = 1;
+
+    <span class="text-slate-500">-- 2. Validate funds</span>
+    <span class="text-purple-400">IF</span> source_balance &lt; transfer_amount <span class="text-purple-400">THEN</span>
+        <span class="text-red-400 font-bold">RAISE EXCEPTION</span> <span class="text-amber-300">'Insufficient funds'</span>;
+    <span class="text-purple-400">ELSE</span>
+        <span class="text-slate-500">-- 3. Execute updates atomically</span>
+        <span class="text-cyan-400">UPDATE</span> accounts <span class="text-cyan-400">SET</span> balance = balance - transfer_amount <span class="text-cyan-400">WHERE</span> account_id = 1;
+        <span class="text-cyan-400">UPDATE</span> accounts <span class="text-cyan-400">SET</span> balance = balance + transfer_amount <span class="text-cyan-400">WHERE</span> account_id = 2;
+        <span class="text-emerald-400 font-bold">COMMIT;</span>
+    <span class="text-purple-400">END IF;</span>
+<span class="text-purple-400 font-bold">END</span> $$;</pre>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- SECTION 2: ACID PROPERTIES (TechVault Slides 7 to 9) -->
+        <section id="acid" class="space-y-10">
+            
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/10 pb-6">
+                <div>
+                    <div class="inline-flex items-center gap-2 text-xs font-semibold text-axLavender uppercase tracking-wider mb-2">
+                        <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+                        <span data-en="Module 02 • Core Guarantees" data-ar="الوحدة الثانية • ضمانات المعاملة">الوحدة الثانية • ضمانات المعاملة</span>
+                    </div>
+                    <h2 class="text-3xl sm:text-4xl font-black text-white" data-en="ACID Properties Deep Dive" data-ar="خصائص ACID بالتفصيل كما بالـ PDF">خصائص ACID بالتفصيل كما بالـ PDF</h2>
+                </div>
+                <p class="text-slate-400 text-sm max-w-md" data-en="Atomicity, Consistency, Isolation, Durability — the four cornerstones of dependable database transactions." data-ar="الذرية، الاتساق، العزل، والمتانة — الركائز الأربع لضمان سلامة البيانات المطلقة.">
+                    الذرية، الاتساق، العزل، والمتانة — الركائز الأربع لضمان سلامة البيانات المطلقة.
+                </p>
+            </div>
+
+            <!-- ACID Interactive Tabs -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <button onclick="switchAcidTab('A')" id="acidTabA" class="acid-tab-btn p-4 rounded-2xl bg-purple-600/20 border border-purple-500/40 text-left rtl:text-right transition flex items-center gap-3">
+                    <span class="w-9 h-9 rounded-xl bg-purple-600 text-white font-bold flex items-center justify-center text-base">A</span>
+                    <div>
+                        <div class="text-white font-bold text-sm" data-en="Atomicity" data-ar="الذرية (Atomicity)">الذرية (Atomicity)</div>
+                        <div class="text-slate-400 text-xs" data-en="All or Nothing" data-ar="الكل أو اللاشيء">الكل أو اللاشيء</div>
+                    </div>
+                </button>
+
+                <button onclick="switchAcidTab('C')" id="acidTabC" class="acid-tab-btn p-4 rounded-2xl bg-[#131625] border border-white/5 hover:border-white/10 text-left rtl:text-right transition flex items-center gap-3">
+                    <span class="w-9 h-9 rounded-xl bg-slate-800 text-slate-300 font-bold flex items-center justify-center text-base">C</span>
+                    <div>
+                        <div class="text-slate-200 font-bold text-sm" data-en="Consistency" data-ar="الاتساق (Consistency)">الاتساق (Consistency)</div>
+                        <div class="text-slate-400 text-xs" data-en="Preserving Rules" data-ar="الحفاظ على القواعد">الحفاظ على القواعد</div>
+                    </div>
+                </button>
+
+                <button onclick="switchAcidTab('I')" id="acidTabI" class="acid-tab-btn p-4 rounded-2xl bg-[#131625] border border-white/5 hover:border-white/10 text-left rtl:text-right transition flex items-center gap-3">
+                    <span class="w-9 h-9 rounded-xl bg-slate-800 text-slate-300 font-bold flex items-center justify-center text-base">I</span>
+                    <div>
+                        <div class="text-slate-200 font-bold text-sm" data-en="Isolation" data-ar="العزل (Isolation)">العزل (Isolation)</div>
+                        <div class="text-slate-400 text-xs" data-en="No Interference" data-ar="استقلالية التنفيذ">استقلالية التنفيذ</div>
+                    </div>
+                </button>
+
+                <button onclick="switchAcidTab('D')" id="acidTabD" class="acid-tab-btn p-4 rounded-2xl bg-[#131625] border border-white/5 hover:border-white/10 text-left rtl:text-right transition flex items-center gap-3">
+                    <span class="w-9 h-9 rounded-xl bg-slate-800 text-slate-300 font-bold flex items-center justify-center text-base">D</span>
+                    <div>
+                        <div class="text-slate-200 font-bold text-sm" data-en="Durability" data-ar="المتانة (Durability)">المتانة (Durability)</div>
+                        <div class="text-slate-400 text-xs" data-en="Surviving Crashes" data-ar="صمود البيانات">صمود البيانات</div>
+                    </div>
+                </button>
+            </div>
+
+            <!-- Tab Content Display -->
+            <div class="glass-card rounded-3xl p-6 sm:p-10 border-white/10">
+                
+                <!-- ATOMICITY PANEL (TechVault Slides 8 & 9) -->
+                <div id="acidContentA" class="acid-content-panel space-y-8">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <span class="text-xs font-semibold text-purple-400 uppercase tracking-wider font-mono">SLIDES 8 & 9 VISUAL SIMULATOR</span>
+                            <h3 class="text-2xl font-bold text-white mt-1" data-en="Atomicity: Account Transfer A ($500) → B ($200)" data-ar="الذرية: تحويل بنكي من الحساب A ($500) إلى الحساب B ($200)">الذرية: تحويل بنكي من الحساب A ($500) إلى الحساب B ($200)</h3>
+                        </div>
+                        <!-- Mode Selector -->
+                        <div class="flex items-center gap-2 p-1 rounded-2xl bg-[#0E111C] border border-white/10">
+                            <button id="btnModeSuccess" onclick="setAtomicityMode('success')" class="px-4 py-1.5 rounded-xl bg-purple-600 text-white text-xs font-bold transition">✅ مسار النجاح (Commit)</button>
+                            <button id="btnModeCrash" onclick="setAtomicityMode('crash')" class="px-4 py-1.5 rounded-xl text-slate-400 hover:text-white text-xs font-bold transition">⚡ انقطاع الكهرباء (Crash/Rollback)</button>
+                        </div>
+                    </div>
+
+                    <!-- Balances Canvas -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                        <!-- Account A -->
+                        <div class="p-6 rounded-3xl bg-[#0E111C] border border-white/5 relative overflow-hidden text-center">
+                            <div class="text-xs text-slate-400 mb-1">Account A (المصدر)</div>
+                            <div id="atomBalA" class="text-4xl font-black font-mono text-emerald-400">$500</div>
+                            <div class="text-xs text-slate-500 mt-2">Initial: $500</div>
+                        </div>
+
+                        <!-- Account B -->
+                        <div class="p-6 rounded-3xl bg-[#0E111C] border border-white/5 relative overflow-hidden text-center">
+                            <div class="text-xs text-slate-400 mb-1">Account B (المستلم)</div>
+                            <div id="atomBalB" class="text-4xl font-black font-mono text-cyan-400">$200</div>
+                            <div class="text-xs text-slate-500 mt-2">Initial: $200</div>
+                        </div>
+                    </div>
+
+                    <!-- Step Logger Display -->
+                    <div class="p-5 rounded-2xl bg-[#0B0D17] border border-white/10 font-mono text-sm space-y-2" id="atomLogger">
+                        <div class="text-slate-400">جاهز للتنفيذ. اختر الوضع واضغط "تشغيل المحاكاة".</div>
+                    </div>
+
+                    <!-- Controls -->
+                    <div class="flex items-center justify-between flex-wrap gap-4 pt-4 border-t border-white/10">
+                        <button onclick="runAtomicitySimulation()" class="px-6 py-2.5 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold shadow-md shadow-purple-950 transition">
+                            <span>تشغيل المحاكاة ▶</span>
+                        </button>
+                        <div class="text-xs text-slate-400 font-mono" id="atomStatusText">
+                            الحالة: إجمالي الرصيد المحفوظ A + B = $700
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CONSISTENCY PANEL -->
+                <div id="acidContentC" class="acid-content-panel space-y-6 hidden">
+                    <div>
+                        <span class="text-xs font-semibold text-emerald-400 uppercase tracking-wider font-mono">INVARIANTS & CONSTRAINTS</span>
+                        <h3 class="text-2xl font-bold text-white mt-1" data-en="Consistency: Preserving Rules and Invariants" data-ar="الاتساق (Consistency): الحفاظ على القواعد والثوابت">الاتساق (Consistency): الحفاظ على القواعد والثوابت</h3>
+                        <p class="text-slate-400 text-sm mt-2 leading-relaxed" data-en="The database must only transition from one valid state to another valid state. Both schema constraints and application business rules must hold true." data-ar="يجب أن تنتقل قاعدة البيانات من حالة صالحة إلى حالة أخرى صالحة فقط. يجب ألا تنتهك المعاملة قيود الجدول (Constraints) أو القواعد المنطقية للنظام.">
+                            يجب أن تنتقل قاعدة البيانات من حالة صالحة إلى حالة أخرى صالحة فقط. يجب ألا تنتهك المعاملة قيود الجدول (Constraints) أو القواعد المنطقية للنظام.
+                        </p>
+                    </div>
+
+                    <!-- Constraints Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="p-5 rounded-2xl bg-[#0E111C] border border-white/5 space-y-2">
+                            <div class="text-emerald-400 text-lg font-bold">1. الثوابت المالية (Invariants)</div>
+                            <p class="text-slate-400 text-xs leading-relaxed">
+                                مجموع أموال النظام <span class="font-mono text-purple-300">Sum(A + B) = 700</span> يجب أن يظل ثابتاً تماماً قبل المعاملة وبعد انتهائها.
+                            </p>
+                        </div>
+                        <div class="p-5 rounded-2xl bg-[#0E111C] border border-white/5 space-y-2">
+                            <div class="text-cyan-400 text-lg font-bold">2. قيود الأعمدة (Check Constraints)</div>
+                            <p class="text-slate-400 text-xs leading-relaxed">
+                                منع تحول الرصيد إلى قيمة سالبة <span class="font-mono text-purple-300">CHECK (balance &gt;= 0)</span>. أي محاولة تؤدي لسالب تلغي المعاملة فوراً.
+                            </p>
+                        </div>
+                        <div class="p-5 rounded-2xl bg-[#0E111C] border border-white/5 space-y-2">
+                            <div class="text-purple-400 text-lg font-bold">3. العلاقات (Foreign Keys)</div>
+                            <p class="text-slate-400 text-xs leading-relaxed">
+                                لا يمكن التحويل إلى <span class="font-mono text-purple-300">account_id</span> غير موجود في جدول الحسابات، وإلا سترفض الـ DB المعاملة وتعمل Rollback.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ISOLATION PANEL -->
+                <div id="acidContentI" class="acid-content-panel space-y-6 hidden">
+                    <div>
+                        <span class="text-xs font-semibold text-cyan-400 uppercase tracking-wider font-mono">CONCURRENT INDEPENDENCE</span>
+                        <h3 class="text-2xl font-bold text-white mt-1" data-en="Isolation: Each Transaction Executes in Solitude" data-ar="العزل (Isolation): استقلالية المعاملات المتزامنة">العزل (Isolation): استقلالية المعاملات المتزامنة</h3>
+                        <p class="text-slate-400 text-sm mt-2 leading-relaxed" data-en="Even if thousands of transactions execute at the exact same millisecond, each transaction must feel as if it is the only one operating on the database." data-ar="حتى وإن تم تنفيذ آلاف المعاملات في نفس الجزء من الثانية، يجب أن تشعر كل معاملة وكأنها الوحيدة التي تعمل على النظام. هذا يمنع التداخل وحالات السباق (Race Conditions).">
+                            حتى وإن تم تنفيذ آلاف المعاملات في نفس الجزء من الثانية، يجب أن تشعر كل معاملة وكأنها الوحيدة التي تعمل على النظام. هذا يمنع التداخل وحالات السباق (Race Conditions).
+                        </p>
+                    </div>
+
+                    <div class="p-6 rounded-2xl bg-[#0E111C] border border-purple-500/20 flex flex-col sm:flex-row items-center justify-between gap-6">
+                        <div class="space-y-2">
+                            <div class="text-white font-bold text-lg" data-en="Explore the 4 Isolation Levels in Module 04" data-ar="تعرف على مستويات العزل الأربعة والـ Concurrency Problems">تعرف على مستويات العزل الأربعة والـ Concurrency Problems</div>
+                            <p class="text-slate-400 text-xs" data-en="See how Read Uncommitted, Read Committed, Repeatable Read, and Serializable resolve concurrency phenomena." data-ar="تعرف على كيف يقوم كل مستوى بمنع الـ Dirty Read والـ Non-repeatable Read والـ Phantom Read.">تعرف على كيف يقوم كل مستوى بمنع الـ Dirty Read والـ Non-repeatable Read والـ Phantom Read.</p>
+                        </div>
+                        <a href="#concurrency" class="px-6 py-2.5 rounded-full bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shrink-0 transition">
+                            انتقل للمحاكي التفاعلي ⚡
+                        </a>
+                    </div>
+                </div>
+
+                <!-- DURABILITY PANEL -->
+                <div id="acidContentD" class="acid-content-panel space-y-6 hidden">
+                    <div>
+                        <span class="text-xs font-semibold text-amber-400 uppercase tracking-wider font-mono">SURVIVING DISASTERS & WAL</span>
+                        <h3 class="text-2xl font-bold text-white mt-1" data-en="Durability: Write-Ahead Logging (WAL)" data-ar="المتانة (Durability): آلية سجل الكتابة المسبقة (WAL)">المتانة (Durability): آلية سجل الكتابة المسبقة (WAL)</h3>
+                        <p class="text-slate-400 text-sm mt-2 leading-relaxed" data-en="Once a transaction commits, its changes are permanently recorded and guaranteed not to be lost, even in a catastrophic power outage." data-ar="بمجرد إتمام الـ COMMIT، تصبح البيانات مسجلة بشكل دائم ومضمون ضد الضياع، حتى لو انقطعت الكهرباء عن السيرفر في اللحظة التالية مباشرة.">
+                            بمجرد إتمام الـ COMMIT، تصبح البيانات مسجلة بشكل دائم ومضمون ضد الضياع، حتى لو انقطعت الكهرباء عن السيرفر في اللحظة التالية مباشرة.
+                        </p>
+                    </div>
+
+                    <div class="p-6 rounded-3xl bg-[#0E111C] border border-white/5 space-y-6">
+                        <div class="flex items-center justify-between flex-wrap gap-4">
+                            <span class="text-sm font-bold text-white">كيف تحقق قواعد البيانات المتانة؟ (Write-Ahead Logging)</span>
+                            <button onclick="runWalAnimation()" class="px-4 py-1.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold hover:bg-amber-500/30 transition">
+                                محاكاة انقطاع الكهرباء بعد Commit ⚡
+                            </button>
+                        </div>
+
+                        <!-- WAL Graphic -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 font-mono text-xs">
+                            <div id="walBoxMem" class="p-4 rounded-2xl bg-slate-900 border border-white/5 text-center space-y-2">
+                                <div class="text-slate-400">1. ذاكرة الرام (Buffer Pool)</div>
+                                <div class="text-lg font-bold text-slate-300">Data Pages</div>
+                                <div class="text-[11px] text-slate-500">تتطاير مع انقطاع الكهرباء</div>
+                            </div>
+                            <div id="walBoxLog" class="p-4 rounded-2xl bg-slate-900 border border-amber-500/30 text-center space-y-2">
+                                <div class="text-amber-400">2. سجل WAL (Disk Log)</div>
+                                <div class="text-lg font-bold text-amber-300">Append-Only Log</div>
+                                <div class="text-[11px] text-emerald-400 font-bold">يُكتب على القرص فوراً قبل Commit!</div>
+                            </div>
+                            <div id="walBoxDisk" class="p-4 rounded-2xl bg-slate-900 border border-white/5 text-center space-y-2">
+                                <div class="text-slate-400">3. ملفات الداتابيز (Data Files)</div>
+                                <div class="text-lg font-bold text-slate-300">Table Data on Disk</div>
+                                <div class="text-[11px] text-slate-500">تُفرّغ لاحقاً عبر الـ Checkpoint</div>
+                            </div>
+                        </div>
+
+                        <div id="walStatusMessage" class="p-3.5 rounded-xl bg-slate-950 border border-white/5 text-xs text-slate-400">
+                            اضغط على "محاكاة انقطاع الكهرباء" لرؤية كيف يسترجع السيرفر البيانات من سجل الـ WAL.
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- SECTION 3: CONCURRENCY PROBLEMS (TechVault Slides 10 to 16) -->
+        <section id="concurrency" class="space-y-10">
+            
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/10 pb-6">
+                <div>
+                    <div class="inline-flex items-center gap-2 text-xs font-semibold text-axLavender uppercase tracking-wider mb-2">
+                        <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+                        <span data-en="Module 03 • Interactive Timeline" data-ar="الوحدة الثالثة • محاكي التوقيت الزمني">الوحدة الثالثة • محاكي التوقيت الزمني</span>
+                    </div>
+                    <h2 class="text-3xl sm:text-4xl font-black text-white" data-en="Common Problems with Concurrent Transactions" data-ar="مشاكل التزامن بالتوقيت الزمني الدقيق (T1 vs T2)">مشاكل التزامن بالتوقيت الزمني الدقيق (T1 vs T2)</h2>
+                </div>
+                <p class="text-slate-400 text-sm max-w-md" data-en="Interactive step-by-step reproduction of Lost Update, Dirty Read, Non-repeatable Read, and Phantom Read from the TechVault slides." data-ar="محاكاة تفاعلية خطوة بخطوة لكل من التحديث المفقود، القراءة القذرة، والقراءة غير المتكررة كما تم شرحها بسلايدات TechVault 10-16.">
+                    محاكاة تفاعلية خطوة بخطوة لكل من التحديث المفقود، القراءة القذرة، والقراءة غير المتكررة كما تم شرحها بسلايدات TechVault 10-16.
+                </p>
+            </div>
+
+            <!-- Problem Tabs -->
+            <div class="flex flex-wrap items-center gap-3">
+                <button onclick="switchProblem('lostUpdate')" id="pTab-lostUpdate" class="problem-tab-btn px-5 py-2.5 rounded-2xl bg-purple-600 text-white font-bold text-xs sm:text-sm shadow-md transition">
+                    1. Lost Update (Slide 12)
+                </button>
+                <button onclick="switchProblem('dirtyRead')" id="pTab-dirtyRead" class="problem-tab-btn px-5 py-2.5 rounded-2xl bg-[#131625] text-slate-300 hover:text-white font-bold text-xs sm:text-sm border border-white/5 transition">
+                    2. Dirty Read (Slides 14 & 15)
+                </button>
+                <button onclick="switchProblem('nonRepeatable')" id="pTab-nonRepeatable" class="problem-tab-btn px-5 py-2.5 rounded-2xl bg-[#131625] text-slate-300 hover:text-white font-bold text-xs sm:text-sm border border-white/5 transition">
+                    3. Non-repeatable Read (Slide 16)
+                </button>
+                <button onclick="switchProblem('phantom')" id="pTab-phantom" class="problem-tab-btn px-5 py-2.5 rounded-2xl bg-[#131625] text-slate-300 hover:text-white font-bold text-xs sm:text-sm border border-white/5 transition">
+                    4. Phantom Read
+                </button>
+            </div>
+
+            <!-- Timeline Simulator Card -->
+            <div class="glass-card rounded-3xl p-6 sm:p-10 border-white/10 space-y-8">
+                
+                <!-- Problem Summary Header -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-white/10">
+                    <div>
+                        <span id="probBadge" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-red-500/10 text-red-400 border border-red-500/20 font-mono">CONCURRENCY ANOMALY</span>
+                        <h3 id="probTitle" class="text-2xl font-black text-white mt-2">Lost Update (التحديث المفقود)</h3>
+                        <p id="probDesc" class="text-slate-400 text-sm mt-1 max-w-2xl">
+                            معاملتان تقومان بقراءة نفس القيمة في نفس الوقت، الأولى تطرح 100 والثانية تضيف 50. تقوم الثانية بالكتابة بعد الأولى فتمحو تعديل الأولى تماماً!
+                        </p>
+                    </div>
+
+                    <!-- State Box: Before & After -->
+                    <div class="flex items-center gap-4 bg-[#0B0D17] p-4 rounded-2xl border border-white/5 shrink-0 font-mono text-xs">
+                        <div>
+                            <div class="text-slate-500 text-[10px]">BEFORE</div>
+                            <div id="valBefore" class="text-white font-bold">A = 500, B = 200</div>
+                        </div>
+                        <div class="text-slate-600">➔</div>
+                        <div>
+                            <div class="text-slate-500 text-[10px]">EXPECTED vs ACTUAL</div>
+                            <div id="valAfter" class="text-red-400 font-bold">Actual: A=550 (Lost 100!)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- T1 & T2 Vertical Timeline Grid (Matching PDF Slide Layout) -->
+                <div class="relative bg-[#0A0C16] p-6 sm:p-8 rounded-3xl border border-white/5 font-mono text-xs sm:text-sm overflow-hidden">
+                    
+                    <!-- Vertical Time Axis Line -->
+                    <div class="absolute top-16 bottom-16 left-1/2 -translate-x-1/2 w-0.5 bg-gradient-to-b from-purple-500 via-indigo-500 to-transparent opacity-30 pointer-events-none hidden sm:block"></div>
+                    <div class="absolute top-8 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-slate-900 border border-white/10 text-[10px] text-slate-400 uppercase tracking-widest hidden sm:block">
+                        Time ↓
+                    </div>
+
+                    <!-- Columns Header -->
+                    <div class="grid grid-cols-2 gap-6 sm:gap-12 mb-8 pb-4 border-b border-white/10">
+                        <div class="text-center sm:text-left rtl:sm:text-right">
+                            <span class="px-4 py-1.5 rounded-full bg-purple-500/20 text-axLavender border border-purple-500/30 font-bold text-sm">
+                                Transaction 1 (T1)
+                            </span>
+                        </div>
+                        <div class="text-center sm:text-right rtl:sm:text-left">
+                            <span class="px-4 py-1.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-bold text-sm">
+                                Transaction 2 (T2)
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Steps List -->
+                    <div id="timelineStepsList" class="space-y-4">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+
+                </div>
+
+                <!-- Simulator Player Controls -->
+                <div class="flex items-center justify-between flex-wrap gap-4 pt-4 border-t border-white/10">
+                    <div class="flex items-center gap-3">
+                        <button id="btnPlayTimeline" onclick="playCurrentTimeline()" class="px-5 py-2 rounded-full bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition flex items-center gap-2">
+                            <span>▶ تشغيل الخط الزمني</span>
+                        </button>
+                        <button onclick="stepForwardTimeline()" class="px-4 py-2 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition">
+                            خطوة للأمام ❯
+                        </button>
+                        <button onclick="resetCurrentTimeline()" class="px-4 py-2 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition">
+                            إعادة ضبط ↺
+                        </button>
+                    </div>
+
+                    <div id="timelineProgressStatus" class="text-xs text-slate-400 font-mono">
+                        الخطوة 0 من 0
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- SECTION 4: ISOLATION LEVELS (TechVault Slide 17) -->
+        <section id="isolation" class="space-y-10">
+            
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/10 pb-6">
+                <div>
+                    <div class="inline-flex items-center gap-2 text-xs font-semibold text-axLavender uppercase tracking-wider mb-2">
+                        <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+                        <span data-en="Module 04 • The Shield" data-ar="الوحدة الرابعة • درع الحماية">الوحدة الرابعة • درع الحماية</span>
+                    </div>
+                    <h2 class="text-3xl sm:text-4xl font-black text-white" data-en="SQL Isolation Levels Ladder" data-ar="سلم مستويات العزل الأربعة (Slide 17)">سلم مستويات العزل الأربعة (Slide 17)</h2>
+                </div>
+                <p class="text-slate-400 text-sm max-w-md" data-en="The higher the isolation level, the more anomalies are prevented, but with trade-offs in concurrent throughput." data-ar="كلما صعدت في مستوى العزل، تخلصت من مشاكل التزامن أكثر، ولكن بمقابل انخفاض طفيف في سرعة التنفيذ (Throughput).">
+                    كلما صعدت في مستوى العزل، تخلصت من مشاكل التزامن أكثر، ولكن بمقابل انخفاض طفيف في سرعة التنفيذ (Throughput).
+                </p>
+            </div>
+
+            <!-- Interactive Ladder & Matrix -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                
+                <!-- Left: 4 Levels Vertical Ladder -->
+                <div class="lg:col-span-5 space-y-3">
+                    <div onclick="selectIsoLevel(0)" id="isoCard0" class="iso-card cursor-pointer p-5 rounded-3xl bg-[#131625] border border-white/5 hover:border-purple-400/40 transition-all duration-300">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400 font-mono">Level 1</span>
+                            <span class="text-xs text-emerald-400 font-bold">أعلى أداء (Best Throughput)</span>
+                        </div>
+                        <h4 class="text-xl font-bold text-white mt-2">Read Uncommitted</h4>
+                        <p class="text-xs text-slate-400 mt-1">لا يوجد عزل تقريباً. أي معاملة يمكنها قراءة تعديلات المعاملات الأخرى حتى قبل عمل Commit.</p>
+                    </div>
+
+                    <div onclick="selectIsoLevel(1)" id="isoCard1" class="iso-card cursor-pointer p-5 rounded-3xl bg-[#131625] border border-white/5 hover:border-purple-400/40 transition-all duration-300">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-purple-500/20 text-axLavender font-mono">Level 2</span>
+                            <span class="text-xs text-slate-400">الافتراضي في PostgreSQL</span>
+                        </div>
+                        <h4 class="text-xl font-bold text-white mt-2">Read Committed</h4>
+                        <p class="text-xs text-slate-400 mt-1">المعاملة تقرأ البيانات التي تم عمل Commit لها فقط لحظة تنفيذ الأمر. يمنع الـ Dirty Read تماماً.</p>
+                    </div>
+
+                    <div onclick="selectIsoLevel(2)" id="isoCard2" class="iso-card cursor-pointer p-5 rounded-3xl bg-[#131625] border border-white/5 hover:border-purple-400/40 transition-all duration-300">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-mono">Level 3</span>
+                            <span class="text-xs text-slate-400">الافتراضي في MySQL InnoDB</span>
+                        </div>
+                        <h4 class="text-xl font-bold text-white mt-2">Repeatable Read</h4>
+                        <p class="text-xs text-slate-400 mt-1">تأخذ المعاملة لقطة (Snapshot) عند بدايتها، وكل قراءاتها تعود لنفس اللقطة. يمنع الـ Non-Repeatable Read.</p>
+                    </div>
+
+                    <div onclick="selectIsoLevel(3)" id="isoCard3" class="iso-card cursor-pointer p-5 rounded-3xl bg-[#131625] border border-white/5 hover:border-purple-400/40 transition-all duration-300">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono">Level 4</span>
+                            <span class="text-xs text-red-400 font-bold">أعلى عزل (Worst Throughput)</span>
+                        </div>
+                        <h4 class="text-xl font-bold text-white mt-2">Serializable</h4>
+                        <p class="text-xs text-slate-400 mt-1">ينفذ المعاملات وكأنها تعمل بشكل تسلسلي واحد تلو الآخر. حماية تامة من كافة المشاكل بما فيها Phantom Read.</p>
+                    </div>
+                </div>
+
+                <!-- Right: Interactive Matrix Status -->
+                <div class="lg:col-span-7 glass-card rounded-3xl p-6 sm:p-8 border-white/10">
+                    <h3 class="text-xl font-bold text-white mb-2" id="matrixLevelTitle">المستوى المختار: Repeatable Read</h3>
+                    <p class="text-xs text-slate-400 mb-6" id="matrixLevelDesc">
+                        يحمي من القراءة القذرة والقراءة غير المتكررة عبر تقنية الـ Snapshot Isolation.
+                    </p>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-right rtl:text-right ltr:text-left text-xs sm:text-sm">
+                            <thead>
+                                <tr class="border-b border-white/10 text-slate-400">
+                                    <th class="pb-3 font-semibold">الظاهرة (Phenomenon)</th>
+                                    <th class="pb-3 font-semibold">حالة الحماية</th>
+                                    <th class="pb-3 font-semibold">التفسير</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-white/5" id="matrixTableBody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- SECTION 5: LOCKING MECHANISMS (Pessimistic Locking) -->
+        <section id="locking" class="space-y-10">
+            
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/10 pb-6">
+                <div>
+                    <div class="inline-flex items-center gap-2 text-xs font-semibold text-axLavender uppercase tracking-wider mb-2">
+                        <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+                        <span data-en="Module 05 • Pessimistic Control" data-ar="الوحدة الخامسة • التحكم المتشائم">الوحدة الخامسة • التحكم المتشائم</span>
+                    </div>
+                    <h2 class="text-3xl sm:text-4xl font-black text-white" data-en="Locking Mechanisms & Granularity" data-ar="أنواع الأقفال (Shared vs Exclusive) ومستوياتها">أنواع الأقفال (Shared vs Exclusive) ومستوياتها</h2>
+                </div>
+                <p class="text-slate-400 text-sm max-w-md" data-en="Pessimistic approach locks database resources beforehand to prevent concurrent conflicts." data-ar="المنهج المتشائم يمنع حدوث الأخطاء مسبقاً عبر حجز المورد وقفله قبل إجراء التعديلات عليه.">
+                    المنهج المتشائم يمنع حدوث الأخطاء مسبقاً عبر حجز المورد وقفله قبل إجراء التعديلات عليه.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                
+                <!-- Shared Lock Card -->
+                <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-6">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-mono px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-bold">SHARED LOCK (S-LOCK)</span>
+                        <span class="text-2xl">📖</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white">قفل القراءة المشترك (Shared Lock)</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        يسمح لأكثر من معاملة بقراءة نفس الصف في نفس اللحظة <span class="font-mono text-cyan-300">(SELECT ... FOR SHARE)</span>. ولكن لا يسمح لأي معاملة بكتابة أو تعديل الصف طالما القفل قائم.
+                    </p>
+
+                    <!-- Interactive Diagram -->
+                    <div class="p-6 rounded-2xl bg-[#0E111C] border border-white/5 space-y-4 text-center">
+                        <div class="text-xs text-slate-500 font-mono">Row 42 [Locked with S-Lock]</div>
+                        <div class="flex justify-center items-center gap-4">
+                            <div class="px-3 py-1.5 rounded-xl bg-cyan-500/20 text-cyan-300 text-xs font-bold font-mono">T1 Read ➔ [Allowed] ✓</div>
+                            <div class="px-3 py-1.5 rounded-xl bg-cyan-500/20 text-cyan-300 text-xs font-bold font-mono">T2 Read ➔ [Allowed] ✓</div>
+                        </div>
+                        <div class="pt-3 border-t border-white/5">
+                            <div class="px-3 py-1.5 rounded-xl bg-red-500/20 text-red-400 text-xs font-bold font-mono inline-block">
+                                T3 Write ➔ [BLOCKED / QUEUED ⏳] ❌
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Exclusive Lock Card -->
+                <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-6">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-mono px-3 py-1 rounded-full bg-purple-500/10 text-axLavender border border-purple-500/20 font-bold">EXCLUSIVE LOCK (X-LOCK)</span>
+                        <span class="text-2xl">🔒</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white">القفل الحصري (Exclusive Lock)</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        يمنح لمعاملة واحدة فقط تقوم بالكتابة أو الحذف <span class="font-mono text-purple-300">(SELECT ... FOR UPDATE)</span>. يُمنع على كافة المعاملات الأخرى القراءة أو الكتابة حتى يتم الـ Commit!
+                    </p>
+
+                    <!-- Interactive Diagram -->
+                    <div class="p-6 rounded-2xl bg-[#0E111C] border border-white/5 space-y-4 text-center">
+                        <div class="text-xs text-slate-500 font-mono">Row 42 [Locked exclusively by T1]</div>
+                        <div class="flex justify-center items-center">
+                            <div class="px-4 py-2 rounded-xl bg-purple-600/30 border border-purple-500/50 text-white text-xs font-bold font-mono">
+                                T1 Hold X-Lock (Writing) 🔒
+                            </div>
+                        </div>
+                        <div class="pt-3 border-t border-white/5 flex justify-center gap-2 flex-wrap">
+                            <div class="px-3 py-1 rounded-lg bg-red-500/10 text-red-400 text-xs font-mono">T2 Read ⛔ Blocked</div>
+                            <div class="px-3 py-1 rounded-lg bg-red-500/10 text-red-400 text-xs font-mono">T3 Write ⛔ Blocked</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Granularity Levels -->
+            <div class="p-6 sm:p-8 rounded-3xl bg-[#0F1221] border border-white/10 space-y-6">
+                <h3 class="text-xl font-bold text-white">مستويات حصر القفل (Lock Granularity)</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                    <div class="p-4 rounded-2xl bg-[#141829] border border-white/5 space-y-2">
+                        <div class="text-emerald-400 font-bold text-sm">Row-Level Lock (قفل على مستوى الصف)</div>
+                        <p class="text-slate-400 leading-relaxed">قفل الصف المحدد فقط. يسمح لأي معاملة أخرى بالعمل بحرية على باقي صفوف الجدول دون أي تعطيل. الافتراضي في InnoDB و PostgreSQL.</p>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-[#141829] border border-white/5 space-y-2">
+                        <div class="text-amber-400 font-bold text-sm">Table-Level Lock (قفل على مستوى الجدول)</div>
+                        <p class="text-slate-400 leading-relaxed">قفل الجدول بأكمله بالكامل. يمنع أي عملية على أي صف آخر! بطيء جداً وكان هو الأسلوب المستخدم قديماً في محرك MyISAM.</p>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-[#141829] border border-white/5 space-y-2">
+                        <div class="text-purple-400 font-bold text-sm">Key-Range / Gap Lock (قفل النطاق)</div>
+                        <p class="text-slate-400 leading-relaxed">يقفل فجوة أو مدى من الفهارس (مثل الفهارس بين 10 و 20). هذا القفل هو المفتاح السحري لمنع الـ Phantom Read في مستوى Serializable.</p>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Concurrency Tab -->
-        <div id="concurrency" class="tab-content">
-            <h2 class="text-4xl font-black mb-8 border-b-4 border-black pb-4 uppercase bg-brutalPink text-white inline-block px-4 shadow-brutal" data-en="Concurrency Problems" data-ar="مشاكل التزامن">Concurrency Problems</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="brutal-border bg-white p-6 shadow-brutal flex flex-col">
-                    <h3 class="text-2xl font-bold mb-4 bg-brutalYellow inline-block px-2 border-2 border-black text-black" data-en="Dirty Read" data-ar="القراءة القذرة (Dirty Read)">Dirty Read</h3>
-                    <p class="font-bold mb-6 flex-grow" data-en="Reading uncommitted data from another transaction that later rolls back." data-ar="قراءة بيانات غير مؤكدة من معاملة أخرى يتم التراجع عنها لاحقاً.">Reading uncommitted data from another transaction that later rolls back.</p>
-                    <div class="anim-container brutal-border animating bg-[#f0f0f0]">
-                        <div class="tx-line"></div>
-                        <div class="tx-dot tx-a dr-a-write"><span class="tx-val">Tx A writes X=50</span></div>
-                        <div class="tx-dot tx-a dr-a-roll"><span class="tx-val bg-brutalPink text-white">Tx A Rollback!</span></div>
-                        <div class="tx-dot tx-b dr-b-read"><span class="tx-val">Tx B reads X=50</span></div>
-                        <button class="absolute bottom-2 right-2 rtl:left-2 rtl:right-auto brutal-border bg-brutalYellow text-black px-2 py-1 font-bold shadow-brutal text-sm hover:shadow-brutalHover active:translate-y-1" onclick="replay(this)" data-en="Replay" data-ar="إعادة">Replay</button>
+        </section>
+
+        <!-- SECTION 6: MVCC (Optimistic Concurrency Control) -->
+        <section id="mvcc" class="space-y-10">
+            
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/10 pb-6">
+                <div>
+                    <div class="inline-flex items-center gap-2 text-xs font-semibold text-axLavender uppercase tracking-wider mb-2">
+                        <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+                        <span data-en="Module 06 • The Modern Marvel" data-ar="الوحدة السادسة • المحرك الحديث">الوحدة السادسة • المحرك الحديث</span>
                     </div>
+                    <h2 class="text-3xl sm:text-4xl font-black text-white" data-en="Multi-Version Concurrency Control (MVCC)" data-ar="التحكم المتفائل: تقنية تعدد النسخ (MVCC)">التحكم المتفائل: تقنية تعدد النسخ (MVCC)</h2>
                 </div>
-                <div class="brutal-border bg-white p-6 shadow-brutal flex flex-col">
-                    <h3 class="text-2xl font-bold mb-4 bg-brutalYellow inline-block px-2 border-2 border-black text-black" data-en="Non-Repeatable Read" data-ar="قراءة غير قابلة للتكرار">Non-Repeatable Read</h3>
-                    <p class="font-bold mb-6 flex-grow" data-en="Reading the same row twice gets different data because another transaction modified it." data-ar="قراءة نفس الصف مرتين تعطي بيانات مختلفة لأن معاملة أخرى قامت بتعديله.">Reading the same row twice gets different data because another transaction modified it.</p>
-                    <div class="anim-container brutal-border bg-[#f0f0f0]">
-                        <div class="text-center font-bold text-lg">
-                            <div class="mb-2">Tx A reads: <span class="bg-brutalBlue px-2 border-2 border-black text-black inline-block shadow-brutalHover">100</span></div>
-                            <div class="text-brutalPink my-4 text-xl border-y-4 border-black py-2 bg-black">Tx B updates to 200 & commits</div>
-                            <div>Tx A reads: <span class="bg-brutalOrange px-2 border-2 border-black text-black inline-block shadow-brutalHover">200</span> (Changed!)</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="brutal-border bg-white p-6 shadow-brutal flex flex-col">
-                    <h3 class="text-2xl font-bold mb-4 bg-brutalYellow inline-block px-2 border-2 border-black text-black" data-en="Phantom Read" data-ar="القراءة الوهمية (Phantom Read)">Phantom Read</h3>
-                    <p class="font-bold mb-6 flex-grow" data-en="Executing the same range query twice returns a different set of rows (inserts/deletes)." data-ar="تنفيذ نفس استعلام النطاق مرتين يعيد مجموعة مختلفة من الصفوف.">Executing the same range query twice returns a different set of rows (inserts/deletes).</p>
-                    <div class="anim-container brutal-border bg-[#f0f0f0]">
-                        <div class="text-center font-bold text-lg">
-                            <div class="mb-2">Tx A: SELECT > 10 <span class="bg-brutalGreen px-2 border-2 border-black shadow-brutalHover text-black inline-block">(3 rows)</span></div>
-                            <div class="text-white my-4 text-xl border-y-4 border-black py-2 bg-black">Tx B: INSERT row 15 & commits</div>
-                            <div>Tx A: SELECT > 10 <span class="bg-brutalPink px-2 border-2 border-black shadow-brutalHover text-white inline-block">(4 rows 👻)</span></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="brutal-border bg-white p-6 shadow-brutal flex flex-col">
-                    <h3 class="text-2xl font-bold mb-4 bg-brutalYellow inline-block px-2 border-2 border-black text-black" data-en="Lost Update" data-ar="التحديث المفقود (Lost Update)">Lost Update</h3>
-                    <p class="font-bold mb-6 flex-grow" data-en="Two transactions update the same data simultaneously, one overwrites the other." data-ar="معاملتان تقومان بتحديث نفس البيانات في وقت واحد، فتمسح إحداهما الأخرى.">Two transactions update the same data simultaneously, one overwrites the other.</p>
-                    <div class="anim-container brutal-border bg-[#f0f0f0]">
-                        <div class="text-center font-bold text-lg flex flex-col gap-2">
-                            <div class="bg-black text-white p-2 border-4 border-black">Tx A reads 100 | Tx B reads 100</div>
-                            <div class="bg-brutalBlue p-2 border-2 border-black">Tx A adds 50 -> writes 150</div>
-                            <div class="bg-brutalOrange p-2 border-2 border-black">Tx B adds 100 -> writes 200</div>
-                            <div class="bg-brutalPink text-white p-2 border-2 border-black"><span class="line-through decoration-4">150 is lost!</span> Final is 200.</div>
-                        </div>
-                    </div>
-                </div>
+                <p class="text-slate-400 text-sm max-w-md" data-en="Readers never block writers, and writers never block readers by maintaining multiple snapshots of each row." data-ar="القراءة لا تعطل الكتابة، والكتابة لا تعطل القراءة إطلاقاً، بفضل الاحتفاظ بنسخ تاريخية متعددة من كل صف!">
+                    القراءة لا تعطل الكتابة، والكتابة لا تعطل القراءة إطلاقاً، بفضل الاحتفاظ بنسخ تاريخية متعددة من كل صف!
+                </p>
             </div>
-        </div>
 
-        <!-- Isolation Tab -->
-        <div id="isolation" class="tab-content">
-            <h2 class="text-4xl font-black mb-8 border-b-4 border-black pb-4 uppercase bg-brutalGreen inline-block px-4 shadow-brutal" data-en="Isolation Levels" data-ar="مستويات العزل">Isolation Levels</h2>
-            <div class="brutal-border bg-white p-6 shadow-brutal h-[500px] flex">
-                <div class="w-full flex">
-                    <div class="iso-slider-area w-1/3">
-                        <div class="iso-track"></div>
-                        <div class="iso-thumb" id="isoThumb" style="top: 85%;"></div>
-                        <div class="iso-level" onclick="setIso(0, this)" data-en="Serializable" data-ar="قابل للتسلسل (Serializable)">Serializable</div>
-                        <div class="iso-level" onclick="setIso(1, this)" data-en="Repeatable Read" data-ar="قراءة قابلة للتكرار">Repeatable Read</div>
-                        <div class="iso-level" onclick="setIso(2, this)" data-en="Read Committed" data-ar="قراءة مؤكدة (Read Committed)">Read Committed</div>
-                        <div class="iso-level active" onclick="setIso(3, this)" data-en="Read Uncommitted" data-ar="قراءة غير مؤكدة">Read Uncommitted</div>
-                    </div>
-                    <div class="w-2/3 flex flex-col justify-center gap-4 text-xl">
-                        <div class="iso-check" id="checkDR"><span>❌</span> <span data-en="Dirty Read" data-ar="القراءة القذرة">Dirty Read</span></div>
-                        <div class="iso-check" id="checkNRR"><span>❌</span> <span data-en="Non-Repeatable Read" data-ar="قراءة غير قابلة للتكرار">Non-Repeatable Read</span></div>
-                        <div class="iso-check" id="checkPR"><span>❌</span> <span data-en="Phantom Read" data-ar="القراءة الوهمية">Phantom Read</span></div>
-                        <div class="iso-check" id="checkLU"><span>❌</span> <span data-en="Lost Update" data-ar="التحديث المفقود">Lost Update</span></div>
-                    </div>
+            <!-- MVCC Interactive Snapshot Visualizer -->
+            <div class="glass-card rounded-3xl p-6 sm:p-10 border-white/10 space-y-8">
+                <div>
+                    <span class="text-xs font-mono px-3 py-1 rounded-full bg-purple-500/10 text-axLavender border border-purple-500/20 font-bold">SNAPSHOT ISOLATION & ROLLBACK POINTERS</span>
+                    <h3 class="text-2xl font-bold text-white mt-2">كيف تعمل تقنية MVCC في محركات الـ Database؟</h3>
+                    <p class="text-slate-400 text-sm mt-1 max-w-3xl">
+                        عندما تقوم معاملة بتعديل صف، لا تمحو البيانات القديمة، بل تنشئ نسخة جديدة من الصف وتضع مؤشراً للنسخة القديمة. كل معاملة تقرأ النسخة التي كانت موجودة وقت بدء تلك المعاملة!
+                    </p>
                 </div>
-            </div>
-        </div>
 
-        <!-- Locking Tab -->
-        <div id="locking" class="tab-content">
-            <h2 class="text-4xl font-black mb-8 border-b-4 border-black pb-4 uppercase bg-brutalPurple text-white inline-block px-4 shadow-brutal" data-en="Locking (Pessimistic)" data-ar="الأقفال التشاؤمية (Locking)">Locking (Pessimistic)</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="brutal-border bg-white p-6 shadow-brutal flex flex-col">
-                    <h3 class="text-2xl font-bold mb-4 bg-brutalYellow inline-block px-2 border-2 border-black text-black" data-en="Shared Lock (Read)" data-ar="قفل مشترك (للقراءة)">Shared Lock (Read)</h3>
-                    <p class="font-bold mb-6 flex-grow" data-en="Multiple transactions can read, but none can write." data-ar="يمكن لعدة معاملات القراءة، لكن لا يمكن لأي منها الكتابة.">Multiple transactions can read, but none can write.</p>
-                    <div class="anim-container brutal-border animating bg-[#f0f0f0]">
-                        <div class="lock-row">Row Data
-                            <span class="lock-icon" style="opacity:1">🔓</span>
-                        </div>
-                        <div class="lock-arrow sl-read1">↓ R</div>
-                        <div class="lock-arrow sl-read2">↓ R</div>
-                        <div class="lock-arrow sl-write text-brutalPink">↓ W ❌</div>
-                        <button class="absolute bottom-2 right-2 rtl:left-2 rtl:right-auto brutal-border bg-brutalBlue text-black px-2 py-1 font-bold shadow-brutal text-sm hover:shadow-brutalHover active:translate-y-1" onclick="replay(this)" data-en="Replay" data-ar="إعادة">Replay</button>
-                    </div>
-                </div>
-                <div class="brutal-border bg-white p-6 shadow-brutal flex flex-col">
-                    <h3 class="text-2xl font-bold mb-4 bg-brutalYellow inline-block px-2 border-2 border-black text-black" data-en="Exclusive Lock (Write)" data-ar="قفل حصري (للكتابة)">Exclusive Lock (Write)</h3>
-                    <p class="font-bold mb-6 flex-grow" data-en="Only one transaction can access the data. Others must wait." data-ar="معاملة واحدة فقط يمكنها الوصول. يجب على الآخرين الانتظار.">Only one transaction can access the data. Others must wait.</p>
-                    <div class="anim-container brutal-border animating bg-[#f0f0f0]">
-                        <div class="lock-row border-brutalPink border-4">Row Data
-                            <span class="lock-icon text-brutalPink" style="opacity:1;">🔒</span>
-                        </div>
-                        <div class="lock-arrow sl-read1 text-brutalPink">↓ R ❌</div>
-                        <div class="lock-arrow sl-write text-brutalPink">↓ W ❌</div>
-                        <button class="absolute bottom-2 right-2 rtl:left-2 rtl:right-auto brutal-border bg-brutalBlue text-black px-2 py-1 font-bold shadow-brutal text-sm hover:shadow-brutalHover active:translate-y-1" onclick="replay(this)" data-en="Replay" data-ar="إعادة">Replay</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- MVCC Tab -->
-        <div id="mvcc" class="tab-content">
-            <h2 class="text-4xl font-black mb-8 border-b-4 border-black pb-4 uppercase bg-brutalOrange inline-block px-4 shadow-brutal" data-en="MVCC (Optimistic)" data-ar="التحكم في التزامن متعدد الإصدارات (MVCC)">MVCC (Optimistic)</h2>
-            <div class="brutal-border bg-white p-6 shadow-brutal">
-                <p class="font-bold mb-6 text-xl" data-en="Multi-Version Concurrency Control. Readers don't block writers, writers don't block readers. Each transaction sees a snapshot." data-ar="لا القراء يمنعون الكتاب، ولا الكتاب يمنعون القراء. كل معاملة ترى لقطة (Snapshot) خاصة بها.">Multi-Version Concurrency Control. Readers don't block writers, writers don't block readers. Each transaction sees a snapshot.</p>
-                <div class="anim-container brutal-border animating bg-[#f0f0f0] h-[350px]">
-                    <div class="mvcc-timeline">
-                        <div class="mvcc-ver mvcc-v1">V1</div>
-                        <div class="mvcc-ver mvcc-v2">V2</div>
+                <!-- Snapshot Version Chain Graphics -->
+                <div class="p-6 rounded-3xl bg-[#090C16] border border-white/5 font-mono text-xs space-y-6">
+                    <div class="text-xs font-bold text-purple-400">سلسلة نسخ الصف (Row Version Chain for User: Mohamed)</div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
                         
-                        <div class="mvcc-tx mvcc-t1">Tx A: Reads V1 -> Writes V2</div>
-                        <div class="mvcc-tx mvcc-t2">Tx B: Reads V1 -> Tries Write (Conflict!)</div>
-                    </div>
-                    <button class="absolute bottom-2 right-2 rtl:left-2 rtl:right-auto brutal-border bg-brutalPink text-white px-4 py-2 font-bold shadow-brutal hover:shadow-brutalHover active:translate-y-1" onclick="replay(this)" data-en="Replay" data-ar="إعادة">Replay</button>
-                </div>
-            </div>
-        </div>
+                        <!-- Version 1 -->
+                        <div class="p-4 rounded-2xl bg-[#121524] border border-white/10 space-y-2 relative">
+                            <div class="flex justify-between text-[11px] text-slate-500">
+                                <span>Version 1</span>
+                                <span class="text-emerald-400">TxID: 100</span>
+                            </div>
+                            <div class="text-base font-bold text-white">Balance = $500</div>
+                            <div class="text-[10px] text-slate-400">Created at: 09:00:00</div>
+                        </div>
 
-        <!-- DBs Tab -->
-        <div id="dbs" class="tab-content">
-            <h2 class="text-4xl font-black mb-8 border-b-4 border-black pb-4 uppercase bg-brutalYellow inline-block px-4 shadow-brutal" data-en="MySQL vs PostgreSQL" data-ar="مقارنة MySQL و PostgreSQL">MySQL vs PostgreSQL</h2>
-            <div class="brutal-border bg-white shadow-brutal overflow-hidden">
-                <div class="flex flex-col md:flex-row">
-                    <div class="md:w-1/2 p-8 border-b-4 md:border-b-0 md:border-r-4 border-black text-center bg-[#f0f0f0]">
-                        <div class="text-6xl mb-4">🐬</div>
-                        <h3 class="text-3xl font-black mb-6 uppercase bg-white border-4 border-black inline-block px-4 py-2 shadow-brutal">MySQL</h3>
-                        
-                        <h4 class="text-2xl font-bold mt-6 mb-4 bg-brutalYellow border-2 border-black inline-block px-2" data-en="InnoDB Engine" data-ar="محرك InnoDB">InnoDB Engine</h4>
-                        <ul class="text-left font-bold text-lg space-y-4 max-w-sm mx-auto">
-                            <li class="bg-white p-2 border-2 border-black shadow-brutalHover" data-en="Row-level locking" data-ar="أقفال على مستوى الصف">👉 Row-level locking</li>
-                            <li class="bg-brutalGreen p-2 border-2 border-black shadow-brutalHover" data-en="MVCC supported ✅" data-ar="يدعم MVCC ✅">✅ MVCC supported</li>
-                            <li class="bg-white p-2 border-2 border-black shadow-brutalHover" data-en="Default: Repeatable Read" data-ar="الافتراضي: Repeatable Read">⚙️ Default: Repeatable Read</li>
-                        </ul>
+                        <!-- Arrow -->
+                        <div class="hidden md:flex justify-center text-purple-400 text-lg">
+                            ➔
+                        </div>
 
-                        <h4 class="text-xl font-bold mt-10 mb-4 bg-gray-400 border-2 border-black text-white inline-block px-2" data-en="MyISAM Engine (Legacy)" data-ar="محرك MyISAM (قديم)">MyISAM Engine (Legacy)</h4>
-                        <ul class="text-left font-bold text-lg space-y-4 max-w-sm mx-auto opacity-70">
-                            <li class="bg-white p-2 border-2 border-black" data-en="Table-level locking only" data-ar="أقفال على مستوى الجدول فقط">⚠️ Table-level locking only</li>
-                            <li class="bg-brutalPink text-white p-2 border-2 border-black" data-en="No MVCC ❌" data-ar="لا يدعم MVCC ❌">❌ No MVCC</li>
-                        </ul>
+                        <!-- Version 2 (Current) -->
+                        <div class="p-4 rounded-2xl bg-purple-950/30 border border-purple-500/40 space-y-2 relative shadow-lg shadow-purple-900/20">
+                            <div class="flex justify-between text-[11px] text-slate-400">
+                                <span>Version 2 (Latest)</span>
+                                <span class="text-cyan-400">TxID: 105</span>
+                            </div>
+                            <div class="text-base font-bold text-emerald-400">Balance = $400</div>
+                            <div class="text-[10px] text-slate-400">Pointer to V1 in Undo Log</div>
+                        </div>
+
                     </div>
-                    <div class="md:w-1/2 p-8 text-center bg-brutalBlue border-t-4 md:border-t-0 border-black">
-                        <div class="text-6xl mb-4">🐘</div>
-                        <h3 class="text-3xl font-black mb-6 uppercase bg-white border-4 border-black inline-block px-4 py-2 shadow-brutal">PostgreSQL</h3>
-                        
-                        <h4 class="text-2xl font-bold mt-6 mb-4 bg-white border-2 border-black inline-block px-2" data-en="Advanced MVCC" data-ar="MVCC متقدم">Advanced MVCC</h4>
-                        <ul class="text-left font-bold text-lg space-y-4 max-w-sm mx-auto">
-                            <li class="bg-white p-2 border-2 border-black shadow-brutalHover" data-en="Reads NEVER block writes" data-ar="القراءة لا تمنع الكتابة أبداً">📖 Reads NEVER block writes</li>
-                            <li class="bg-white p-2 border-2 border-black shadow-brutalHover" data-en="Writers NEVER block reads" data-ar="الكتابة لا تمنع القراءة أبداً">✍️ Writers NEVER block reads</li>
-                            <li class="bg-white p-2 border-2 border-black shadow-brutalHover" data-en="Default: Read Committed" data-ar="الافتراضي: Read Committed">⚙️ Default: Read Committed</li>
-                            <li class="bg-brutalGreen p-2 border-2 border-black shadow-brutalHover" data-en="True Serializable Snapshot Isolation" data-ar="عزل لقطة قابل للتسلسل حقيقي">✅ True Serializable Snapshot Isolation</li>
-                        </ul>
+
+                    <div class="p-4 rounded-xl bg-slate-900/60 border border-white/5 text-slate-300 text-xs">
+                        <span class="text-axLavender font-bold">✨ السحر في ذلك:</span> إذا كانت معاملة سابقة بدأت عند TxID 102، ستقرأ بهدوء Version 1 ($500) دون أن تنتظر المعاملة 105 ودون أن تتأثر بها!
                     </div>
                 </div>
+
             </div>
-        </div>
+
+        </section>
+
+        <!-- SECTION 7: MYSQL VS POSTGRESQL -->
+        <section id="engines" class="space-y-10">
+            
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/10 pb-6">
+                <div>
+                    <div class="inline-flex items-center gap-2 text-xs font-semibold text-axLavender uppercase tracking-wider mb-2">
+                        <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+                        <span data-en="Module 07 • Battle of Internals" data-ar="الوحدة السابعة • معركة المحركات">الوحدة السابعة • معركة المحركات</span>
+                    </div>
+                    <h2 class="text-3xl sm:text-4xl font-black text-white" data-en="Engine Showdown: MySQL vs PostgreSQL" data-ar="المقارنة العملية: MySQL (InnoDB vs MyISAM) ضد PostgreSQL">المقارنة العملية: MySQL (InnoDB vs MyISAM) ضد PostgreSQL</h2>
+                </div>
+                <p class="text-slate-400 text-sm max-w-md" data-en="Differences in storage engines, MVCC implementation, lock granularity, and Write-Ahead Log flushing." data-ar="الفروق الجوهرية في هندسة التخزين، وتطبيق MVCC، ومستوى الأقفال، ومزامنة سجل الـ WAL.">
+                    الفروق الجوهرية في هندسة التخزين، وتطبيق MVCC، ومستوى الأقفال، ومزامنة سجل الـ WAL.
+                </p>
+            </div>
+
+            <!-- Split Screen Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                
+                <!-- MySQL Column -->
+                <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-6">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-mono px-3 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 font-bold">MYSQL ARCHITECTURE</span>
+                        <span class="text-2xl font-bold text-amber-400">🐬</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white">MySQL (InnoDB vs MyISAM)</h3>
+                    
+                    <!-- Engine Sub-Cards -->
+                    <div class="space-y-4 text-xs">
+                        <div class="p-4 rounded-2xl bg-[#0E111C] border border-amber-500/20 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-amber-400 text-sm">InnoDB Engine (الحديث والافتراضي)</span>
+                                <span class="text-emerald-400 font-bold">ACID Compliant ✓</span>
+                            </div>
+                            <p class="text-slate-300 leading-relaxed">
+                                يدعم الـ Transactions والـ Row-level Locks، ويطبق MVCC عبر سجل التراجع <span class="font-mono text-purple-300">Undo Logs</span> في ملفات Tablespace.
+                            </p>
+                        </div>
+
+                        <div class="p-4 rounded-2xl bg-[#0E111C] border border-white/5 space-y-2 opacity-75">
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-slate-300 text-sm">MyISAM Engine (القديم والمندثر)</span>
+                                <span class="text-red-400 font-bold">No Transactions ✗</span>
+                            </div>
+                            <p class="text-slate-400 leading-relaxed">
+                                لا يدعم الـ Transactions إطلاقاً! الأقفال فيه على مستوى الجدول بالكامل (Table-level Lock)، ولا يمتلك آلية التعافي من الانهيار (Crash Recovery).
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PostgreSQL Column -->
+                <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-6">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-mono px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 font-bold">POSTGRESQL ARCHITECTURE</span>
+                        <span class="text-2xl font-bold text-cyan-400">🐘</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white">PostgreSQL (Advanced MVCC)</h3>
+
+                    <div class="space-y-4 text-xs">
+                        <div class="p-4 rounded-2xl bg-[#0E111C] border border-cyan-500/20 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-cyan-400 text-sm">Heap Multi-Versioning (xmin / xmax)</span>
+                                <span class="text-emerald-400 font-bold">"Reads Never Block Writes" ✓</span>
+                            </div>
+                            <p class="text-slate-300 leading-relaxed">
+                                يخزن نسخ الصفوف مباشرة داخل الـ Table Heap مع وسم <span class="font-mono text-cyan-300">xmin</span> و <span class="font-mono text-cyan-300">xmax</span> لكل نسخة، ويقوم بعملية الـ Vacuuming التلقائي لحذف النسخ الميتة القديمة.
+                            </p>
+                        </div>
+
+                        <div class="p-4 rounded-2xl bg-[#0E111C] border border-white/5 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-white text-sm">Serializable Snapshot Isolation (SSI)</span>
+                                <span class="text-purple-400 font-bold">True Serializability</span>
+                            </div>
+                            <p class="text-slate-400 leading-relaxed">
+                                يقدم أعلى درجات العزل دون الحاجة إلى أقفال ثقيلة، عبر تتبع تعارضات الرسوم البيانية (Dependency Graph Checking) وإلغاء المعاملات المتضاربة فقط.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- WAL Sync vs Async Toggle Simulator -->
+            <div class="p-6 sm:p-8 rounded-3xl bg-[#0E111C] border border-white/10 space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h4 class="text-xl font-bold text-white">مقارنة سرعة وأمان الـ WAL: Sync Commit vs Async Commit</h4>
+                        <p class="text-xs text-slate-400 mt-1">
+                            هل تفضل الأمان المطلق أم الأداء الخارق؟ شاهد الفرق في مسار الكتابة:
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2 p-1 rounded-2xl bg-slate-900 border border-white/10 shrink-0">
+                        <button id="btnWalSync" onclick="setWalMode('sync')" class="px-4 py-1.5 rounded-xl bg-purple-600 text-white text-xs font-bold transition">Synchronous (Safe)</button>
+                        <button id="btnWalAsync" onclick="setWalMode('async')" class="px-4 py-1.5 rounded-xl text-slate-400 hover:text-white text-xs font-bold transition">Asynchronous (Fast)</button>
+                    </div>
+                </div>
+
+                <div class="p-5 rounded-2xl bg-[#090C16] border border-white/5 font-mono text-xs space-y-3" id="walExplanationBox">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </div>
+
+        </section>
+
     </main>
 
+    <!-- Footer (Axnos Platform Aesthetic) -->
+    <footer class="mt-24 border-t border-white/10 bg-[#070912] py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center font-mono font-bold text-axLavender text-sm">
+                    AX
+                </div>
+                <div>
+                    <div class="text-white font-bold text-sm">Axnos TechVault Interactive Guide</div>
+                    <div class="text-slate-500 text-xs">Based on TechVault Transactions Part 1 by Ahmed Elhelw</div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4 text-xs text-slate-400">
+                <a href="#hero" class="hover:text-axLavender transition">العودة للأعلى ↑</a>
+                <span>•</span>
+                <a href="https://github.com/mohamedjs/db-transaction-concepts" target="_blank" class="hover:text-axLavender transition">مستودع GitHub</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript Logic & Interactive Simulators -->
     <script>
-        // Language Toggle
-        let isArabic = false;
+        // Global language state
+        let currentLang = 'ar';
 
-        function toggleLang() {
-            isArabic = !isArabic;
-            document.body.setAttribute('dir', isArabic ? 'rtl' : 'ltr');
-            document.getElementById('lang-text').innerText = isArabic ? 'English' : 'عربي';
+        function toggleLanguage() {
+            currentLang = currentLang === 'ar' ? 'en' : 'ar';
+            const html = document.documentElement;
+            html.setAttribute('lang', currentLang);
+            html.setAttribute('dir', currentLang === 'ar' ? 'rtl' : 'ltr');
 
-            const elements = document.querySelectorAll('[data-en]');
-            elements.forEach(el => {
-                el.innerHTML = isArabic ? el.getAttribute('data-ar') : el.getAttribute('data-en');
+            document.getElementById('langCurrent').innerText = currentLang === 'ar' ? 'عربي' : 'EN';
+            document.getElementById('langTarget').innerText = currentLang === 'ar' ? 'EN' : 'عربي';
+
+            // Update all data-en / data-ar elements
+            document.querySelectorAll('[data-en][data-ar]').forEach(el => {
+                el.innerText = el.getAttribute(`data-${currentLang}`);
             });
-            
-            updateIsoUI(currentIso);
         }
 
-        // Tab Switching
-        const tabs = document.querySelectorAll('.tab-btn');
-        const contents = document.querySelectorAll('.tab-content');
+        // Section 1: Payment Simulator
+        let payTimer = null;
+        function runPaySimulation() {
+            resetPaySimulation();
+            const steps = [
+                { id: 'step-read', balance: 200, delay: 0 },
+                { id: 'step-check', balance: 200, delay: 700 },
+                { id: 'step-sub', balance: 150, delay: 1400 },
+                { id: 'step-vendor', balance: 150, delay: 2100 },
+                { id: 'step-write', balance: 150, delay: 2800 },
+            ];
 
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                tabs.forEach(t => t.classList.remove('bg-white', 'text-black', 'border-4'));
-                contents.forEach(c => c.classList.remove('active'));
+            steps.forEach(step => {
+                setTimeout(() => {
+                    document.getElementById(step.id).classList.add('bg-purple-900/40', 'border-purple-500/50');
+                    document.getElementById('currentBalanceDisplay').innerText = `$${step.balance}`;
+                }, step.delay);
+            });
+        }
+
+        function resetPaySimulation() {
+            ['step-read', 'step-check', 'step-sub', 'step-vendor', 'step-write'].forEach(id => {
+                const el = document.getElementById(id);
+                el.classList.remove('bg-purple-900/40', 'border-purple-500/50');
+            });
+            document.getElementById('currentBalanceDisplay').innerText = '$200';
+        }
+
+        // Section 1: Code Lab SQL Switcher
+        function switchSqlTab(tab) {
+            const btnMysql = document.getElementById('btnTabMysql');
+            const btnPg = document.getElementById('btnTabPg');
+            const codeMysql = document.getElementById('codeMysql');
+            const codePg = document.getElementById('codePg');
+
+            if (tab === 'mysql') {
+                btnMysql.className = 'px-4 py-1.5 rounded-xl bg-purple-600 text-white text-xs font-bold transition';
+                btnPg.className = 'px-4 py-1.5 rounded-xl text-slate-400 hover:text-white text-xs font-bold transition';
+                codeMysql.classList.remove('hidden');
+                codePg.classList.add('hidden');
+            } else {
+                btnPg.className = 'px-4 py-1.5 rounded-xl bg-purple-600 text-white text-xs font-bold transition';
+                btnMysql.className = 'px-4 py-1.5 rounded-xl text-slate-400 hover:text-white text-xs font-bold transition';
+                codePg.classList.remove('hidden');
+                codeMysql.classList.add('hidden');
+            }
+        }
+
+        // Section 2: ACID Tabs Switcher
+        function switchAcidTab(key) {
+            ['A', 'C', 'I', 'D'].forEach(k => {
+                const btn = document.getElementById(`acidTab${k}`);
+                const content = document.getElementById(`acidContent${k}`);
+                if (k === key) {
+                    btn.className = 'acid-tab-btn p-4 rounded-2xl bg-purple-600/20 border border-purple-500/40 text-left rtl:text-right transition flex items-center gap-3';
+                    btn.querySelector('span').className = 'w-9 h-9 rounded-xl bg-purple-600 text-white font-bold flex items-center justify-center text-base';
+                    content.classList.remove('hidden');
+                } else {
+                    btn.className = 'acid-tab-btn p-4 rounded-2xl bg-[#131625] border border-white/5 hover:border-white/10 text-left rtl:text-right transition flex items-center gap-3';
+                    btn.querySelector('span').className = 'w-9 h-9 rounded-xl bg-slate-800 text-slate-300 font-bold flex items-center justify-center text-base';
+                    content.classList.add('hidden');
+                }
+            });
+        }
+
+        // Atomicity Mode & Runner
+        let atomMode = 'success';
+        function setAtomicityMode(mode) {
+            atomMode = mode;
+            const btnSuccess = document.getElementById('btnModeSuccess');
+            const btnCrash = document.getElementById('btnModeCrash');
+            if (mode === 'success') {
+                btnSuccess.className = 'px-4 py-1.5 rounded-xl bg-purple-600 text-white text-xs font-bold transition';
+                btnCrash.className = 'px-4 py-1.5 rounded-xl text-slate-400 hover:text-white text-xs font-bold transition';
+            } else {
+                btnCrash.className = 'px-4 py-1.5 rounded-xl bg-red-600 text-white text-xs font-bold transition';
+                btnSuccess.className = 'px-4 py-1.5 rounded-xl text-slate-400 hover:text-white text-xs font-bold transition';
+            }
+        }
+
+        function runAtomicitySimulation() {
+            const logger = document.getElementById('atomLogger');
+            const balA = document.getElementById('atomBalA');
+            const balB = document.getElementById('atomBalB');
+            const status = document.getElementById('atomStatusText');
+
+            logger.innerHTML = '<div class="text-purple-400 font-bold">&gt; START TRANSACTION;</div>';
+            balA.innerText = '$500';
+            balB.innerText = '$200';
+
+            setTimeout(() => {
+                logger.innerHTML += '<div>&gt; Read(A) = 500</div>';
+            }, 600);
+
+            setTimeout(() => {
+                logger.innerHTML += '<div>&gt; Write(A) = 400  [Account A deducted 100]</div>';
+                balA.innerText = '$400';
+            }, 1300);
+
+            if (atomMode === 'success') {
+                setTimeout(() => {
+                    logger.innerHTML += '<div>&gt; Read(B) = 200</div>';
+                }, 2000);
+                setTimeout(() => {
+                    logger.innerHTML += '<div>&gt; Write(B) = 300  [Account B credited 100]</div>';
+                    balB.innerText = '$300';
+                }, 2700);
+                setTimeout(() => {
+                    logger.innerHTML += '<div class="text-emerald-400 font-bold">&gt; COMMIT;  (Transaction completed successfully!)</div>';
+                    status.innerHTML = 'الحالة: اكتملت المعاملة بنجاح. A = $400, B = $300 (المجموع = $700)';
+                }, 3400);
+            } else {
+                setTimeout(() => {
+                    logger.innerHTML += '<div class="text-red-400 font-bold">&gt; ⚡⚡⚡ POWER OUTAGE / CRASH AFTER WRITE(A)!</div>';
+                    status.innerHTML = '<span class="text-red-400 font-bold">تحذير: حدث انقطاع مفاجئ للكهرباء! جاري فحص الـ WAL وعمل Rollback...</span>';
+                }, 2000);
+                setTimeout(() => {
+                    logger.innerHTML += '<div class="text-amber-300">&gt; WAL Recovery: Rolling back Write(A)... Reverting A to $500</div>';
+                    balA.innerText = '$500';
+                    balB.innerText = '$200';
+                }, 3200);
+                setTimeout(() => {
+                    logger.innerHTML += '<div class="text-emerald-400 font-bold">&gt; ROLLBACK COMPLETED: System returned to pristine state A=500, B=200.</div>';
+                    status.innerHTML = 'الحالة: تم التراجع بنجاح! لم تُفقد أي أموال (Atomicity Guaranteed).';
+                }, 4200);
+            }
+        }
+
+        // WAL Animation
+        function runWalAnimation() {
+            const status = document.getElementById('walStatusMessage');
+            const walMem = document.getElementById('walBoxMem');
+            const walLog = document.getElementById('walBoxLog');
+
+            status.innerHTML = '<span class="text-purple-400 font-mono">1. Transaction commits ➔ Writing to Disk WAL log first...</span>';
+            walLog.classList.add('border-amber-400', 'bg-amber-950/40');
+
+            setTimeout(() => {
+                status.innerHTML = '<span class="text-red-400 font-mono font-bold">2. ⚡ CRASH! RAM Power cut! Buffer Pool lost!</span>';
+                walMem.classList.add('border-red-500', 'opacity-30');
+            }, 1200);
+
+            setTimeout(() => {
+                status.innerHTML = '<span class="text-emerald-400 font-mono font-bold">3. Server reboots ➔ Reading WAL Log from disk ➔ State restored 100%! Durability achieved!</span>';
+                walMem.classList.remove('border-red-500', 'opacity-30');
+                walLog.classList.remove('border-amber-400', 'bg-amber-950/40');
+            }, 3000);
+        }
+
+        // Section 3: Concurrency Problems Timeline Data
+        const problemData = {
+            lostUpdate: {
+                title: 'Lost Update (التحديث المفقود - Slide 12)',
+                badge: 'TECHVAULT SLIDE 12',
+                desc: 'معاملتان تقومان بقراءة نفس الحساب (A=500) في نفس الوقت. الأولى تطرح 100 وتكتب 400، والثانية تضيف 50 وتكتب 550. كتابة المعاملة الثانية مسحت تعديل المعاملة الأولى تماماً فتبخرت 100$!',
+                before: 'A = 500, B = 200 (Total = 700)',
+                after: 'Actual: A = 550, B = 300 (Total = 850!) ⚠️ Lost 100$',
+                steps: [
+                    { t: 1, side: 'left', code: 'Read(A) ➔ 500', note: 'T1 تقرأ الرصيد 500' },
+                    { t: 2, side: 'right', code: 'Read(A) ➔ 500', note: 'T2 تقرأ نفس الرصيد 500 بالتزامن!' },
+                    { t: 3, side: 'left', code: 'A = A - 100 (400)', note: 'T1 تحسب الرصيد بعد الخصم' },
+                    { t: 4, side: 'right', code: 'A = A + 50 (550)', note: 'T2 تحسب الرصيد بعد الإيداع' },
+                    { t: 5, side: 'left', code: 'Write(A) = 400', note: 'T1 تكتب 400 على الداتابيز' },
+                    { t: 6, side: 'left', code: 'Read(B) = 200', note: 'T1 تقرأ الحساب B' },
+                    { t: 7, side: 'right', code: 'Write(A) = 550 ⚠️', note: 'T2 تكتب 550 وتمحو تعديل T1 تماماً!' },
+                    { t: 8, side: 'left', code: 'Write(B) = 300', note: 'T1 تكمل التحويل لحساب B' },
+                ]
+            },
+            dirtyRead: {
+                title: 'Dirty Read (القراءة القذرة - Slides 14 & 15)',
+                badge: 'TECHVAULT SLIDES 14 & 15',
+                desc: 'المعاملة T1 تعدل البيانات ولم تقم بعمل Commit بعد. المعاملة T2 تقرأ هذه القيمة غير المؤكدة. ثم تفشل T1 وتعمل Rollback! تصبح T2 تعمل على أرقام وهمية لم توجد رسمياً!',
+                before: 'A = 500, B = 200',
+                after: 'T2 اعتمدت على 400$ التي تم إلغاؤها لاحقاً!',
+                steps: [
+                    { t: 1, side: 'left', code: 'Read(A) ➔ 500', note: 'T1 تقرأ 500' },
+                    { t: 2, side: 'left', code: 'Write(A) = 400 (Uncommitted!)', note: 'T1 تعدل إلى 400 ولكن لم تعمل Commit' },
+                    { t: 3, side: 'right', code: 'Read(A) ➔ 400 ⚠️ [DIRTY READ]', note: 'T2 تقرأ القيمة غير المؤكدة!' },
+                    { t: 4, side: 'right', code: 'A = A + 50 (450)', note: 'T2 تحسب اعتماداً على القيمة القذرة' },
+                    { t: 5, side: 'left', code: '💥 ERROR ➔ ROLLBACK!', note: 'T1 تلغي المعاملة ويعود A إلى 500!' },
+                    { t: 6, side: 'right', code: 'Write(A) = 450 (Corrupt State)', note: 'T2 كتبت بيانات مبنية على عملية ملغاة!' }
+                ]
+            },
+            nonRepeatable: {
+                title: 'Non-repeatable Read (قراءة غير متكررة - Slide 16)',
+                badge: 'TECHVAULT SLIDE 16',
+                desc: 'المعاملة T1 تقرأ صفاً معيناً، ثم تقوم المعاملة T2 بتعديل ذلك الصف وعمل Commit. عندما تعيد T1 قراءة نفس الصف داخل نفس المعاملة تجد قيمة مختلفة تماماً!',
+                before: 'A = 500',
+                after: 'T1 قرأت A=500 ثم قرأت A=550 داخل نفس المعاملة!',
+                steps: [
+                    { t: 1, side: 'left', code: 'Read(A) ➔ returns 500', note: 'القراءة الأولى لـ T1' },
+                    { t: 2, side: 'right', code: 'Read(A) ➔ 500', note: 'T2 تقرأ نفس الحساب' },
+                    { t: 3, side: 'right', code: 'Write(A) = 550 & COMMIT;', note: 'T2 تعدل إلى 550 وتؤكد التغيير' },
+                    { t: 4, side: 'left', code: 'Read(A) ➔ returns 550 ⚠️', note: 'T1 تعيد القراءة فتجد القيمة تغيرت فجأة!' }
+                ]
+            },
+            phantom: {
+                title: 'Phantom Read (القراءة الوهمية)',
+                badge: 'RANGE QUERY PHENOMENON',
+                desc: 'المعاملة T1 تستعلم عن مجموعة صفوف بمدى معين (مثلاً كل الحسابات الأكثر من 100$). المعاملة T2 تضيف صفاً جديداً يقع داخل المدى. عندما تعيد T1 نفس الاستعلام يظهر صف إضافي كالشبح!',
+                before: 'Rows with Balance > 100: [3 rows]',
+                after: 'T1 saw 3 rows, then saw 4 rows in identical query!',
+                steps: [
+                    { t: 1, side: 'left', code: 'SELECT WHERE bal > 100 ➔ 3 rows', note: 'T1 تجد 3 حسابات' },
+                    { t: 2, side: 'right', code: 'INSERT (id=4, bal=250); COMMIT;', note: 'T2 تضيف حساباً جديداً' },
+                    { t: 3, side: 'left', code: 'SELECT WHERE bal > 100 ➔ 4 rows 👻', note: 'T1 تعيد الاستعلام فيظهر صف شبح رابع!' }
+                ]
+            }
+        };
+
+        let activeProblemKey = 'lostUpdate';
+        let currentStepIndex = 0;
+        let timelineInterval = null;
+
+        function switchProblem(key) {
+            activeProblemKey = key;
+            ['lostUpdate', 'dirtyRead', 'nonRepeatable', 'phantom'].forEach(k => {
+                const btn = document.getElementById(`pTab-${k}`);
+                if (k === key) {
+                    btn.className = 'problem-tab-btn px-5 py-2.5 rounded-2xl bg-purple-600 text-white font-bold text-xs sm:text-sm shadow-md transition';
+                } else {
+                    btn.className = 'problem-tab-btn px-5 py-2.5 rounded-2xl bg-[#131625] text-slate-300 hover:text-white font-bold text-xs sm:text-sm border border-white/5 transition';
+                }
+            });
+
+            const data = problemData[key];
+            document.getElementById('probTitle').innerText = data.title;
+            document.getElementById('probBadge').innerText = data.badge;
+            document.getElementById('probDesc').innerText = data.desc;
+            document.getElementById('valBefore').innerText = data.before;
+            document.getElementById('valAfter').innerText = data.after;
+
+            renderTimelineSteps();
+            resetCurrentTimeline();
+        }
+
+        function renderTimelineSteps() {
+            const list = document.getElementById('timelineStepsList');
+            const steps = problemData[activeProblemKey].steps;
+            list.innerHTML = '';
+
+            steps.forEach((step, idx) => {
+                const isLeft = step.side === 'left';
+                const row = document.createElement('div');
+                row.id = `tl-step-${idx}`;
+                row.className = `p-3 rounded-2xl border border-white/5 transition-all duration-300 flex items-center justify-between opacity-30 ${isLeft ? 'bg-[#101424] mr-0 ml-auto sm:w-1/2' : 'bg-[#131b2c] ml-0 mr-auto sm:w-1/2 sm:mr-auto'}`;
                 
-                // Add specific styling to active tab based on data-tab
-                tab.classList.add('border-4');
-                document.getElementById(tab.getAttribute('data-tab')).classList.add('active');
+                row.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="w-5 h-5 rounded-full ${isLeft ? 'bg-purple-600' : 'bg-cyan-600'} text-white text-[10px] font-bold flex items-center justify-center">T${step.t}</span>
+                        <span class="font-bold text-slate-200">${step.code}</span>
+                    </div>
+                    <span class="text-[11px] text-slate-400 hidden sm:inline">${step.note}</span>
+                `;
+                list.appendChild(row);
             });
-        });
 
-        // Replay Animations
-        function replay(btn) {
-            const container = btn.parentElement;
-            container.classList.remove('animating');
-            void container.offsetWidth; // trigger reflow
-            container.classList.add('animating');
+            document.getElementById('timelineProgressStatus').innerText = `الخطوة 0 من ${steps.length}`;
         }
 
-        // Isolation Slider Logic
-        let currentIso = 3;
-        const isoLevels = [
-            { id: 0, pos: '10%', dr: true, nrr: true, pr: true, lu: true },
-            { id: 1, pos: '35%', dr: true, nrr: true, pr: false, lu: true }, 
-            { id: 2, pos: '60%', dr: true, nrr: false, pr: false, lu: false },
-            { id: 3, pos: '85%', dr: false, nrr: false, pr: false, lu: false }
+        function stepForwardTimeline() {
+            const steps = problemData[activeProblemKey].steps;
+            if (currentStepIndex < steps.length) {
+                const row = document.getElementById(`tl-step-${currentStepIndex}`);
+                row.classList.remove('opacity-30');
+                row.classList.add('opacity-100', 'border-purple-500/50', 'shadow-md');
+                currentStepIndex++;
+                document.getElementById('timelineProgressStatus').innerText = `الخطوة ${currentStepIndex} من ${steps.length}`;
+            } else {
+                clearInterval(timelineInterval);
+            }
+        }
+
+        function playCurrentTimeline() {
+            resetCurrentTimeline();
+            const steps = problemData[activeProblemKey].steps;
+            timelineInterval = setInterval(() => {
+                if (currentStepIndex < steps.length) {
+                    stepForwardTimeline();
+                } else {
+                    clearInterval(timelineInterval);
+                }
+            }, 800);
+        }
+
+        function resetCurrentTimeline() {
+            clearInterval(timelineInterval);
+            currentStepIndex = 0;
+            const steps = problemData[activeProblemKey].steps;
+            steps.forEach((_, idx) => {
+                const row = document.getElementById(`tl-step-${idx}`);
+                if (row) {
+                    row.classList.add('opacity-30');
+                    row.classList.remove('opacity-100', 'border-purple-500/50', 'shadow-md');
+                }
+            });
+            document.getElementById('timelineProgressStatus').innerText = `الخطوة 0 من ${steps.length}`;
+        }
+
+        // Section 4: Isolation Matrix
+        const isolationMatrixData = [
+            {
+                name: 'Read Uncommitted',
+                desc: 'أضعف مستويات العزل وأعلاها أداءً. يسمح بقراءة التعديلات غير المؤكدة.',
+                phenomena: [
+                    { name: 'Dirty Read', status: false, note: 'موجود ومعرض للخطر ❌' },
+                    { name: 'Non-repeatable Read', status: false, note: 'موجود ومعرض للخطر ❌' },
+                    { name: 'Phantom Read', status: false, note: 'موجود ومعرض للخطر ❌' },
+                    { name: 'Lost Update', status: false, note: 'موجود ❌' }
+                ]
+            },
+            {
+                name: 'Read Committed',
+                desc: 'الافتراضي في PostgreSQL وأغلب المحركات المؤسسية. يمنع قراءة أي بيانات قبل عمل Commit لها.',
+                phenomena: [
+                    { name: 'Dirty Read', status: true, note: 'محمي تماماً ✓' },
+                    { name: 'Non-repeatable Read', status: false, note: 'ما زال ممكناً ❌' },
+                    { name: 'Phantom Read', status: false, note: 'ما زال ممكناً ❌' },
+                    { name: 'Lost Update', status: false, note: 'يحتاج لقفل يدوي (FOR UPDATE)' }
+                ]
+            },
+            {
+                name: 'Repeatable Read',
+                desc: 'الافتراضي في MySQL InnoDB. يضمن أن كل قراءات المعاملة تأتي من نفس اللقطة الزمنية (Snapshot).',
+                phenomena: [
+                    { name: 'Dirty Read', status: true, note: 'محمي تماماً ✓' },
+                    { name: 'Non-repeatable Read', status: true, note: 'محمي تماماً عبر اللقطة ✓' },
+                    { name: 'Phantom Read', status: false, note: 'ممكن بدون أقفال الفهارس ❌' },
+                    { name: 'Lost Update', status: true, note: 'محمي في أغلب التطبيقات' }
+                ]
+            },
+            {
+                name: 'Serializable',
+                desc: 'أعلى وأدق مستوى عزل في علوم قواعد البيانات. ينفذ المعاملات بتسلسل تام وكأنها وحيدة.',
+                phenomena: [
+                    { name: 'Dirty Read', status: true, note: 'محمي بنسبة 100% ✓' },
+                    { name: 'Non-repeatable Read', status: true, note: 'محمي بنسبة 100% ✓' },
+                    { name: 'Phantom Read', status: true, note: 'محمي بنسبة 100% عبر أقفال النطاق ✓' },
+                    { name: 'Lost Update', status: true, note: 'محمي بنسبة 100% ✓' }
+                ]
+            }
         ];
 
-        function setIso(index, el) {
-            currentIso = index;
-            const config = isoLevels.find(l => l.id === index);
-            
-            document.getElementById('isoThumb').style.top = config.pos;
-            
-            document.querySelectorAll('.iso-level').forEach(l => l.classList.remove('active'));
-            if(el) el.classList.add('active');
-            
-            updateIsoUI(index);
+        function selectIsoLevel(idx) {
+            [0, 1, 2, 3].forEach(i => {
+                const card = document.getElementById(`isoCard${i}`);
+                if (i === idx) {
+                    card.className = 'iso-card cursor-pointer p-5 rounded-3xl bg-purple-900/30 border border-purple-500/50 shadow-lg shadow-purple-950 transition-all duration-300';
+                } else {
+                    card.className = 'iso-card cursor-pointer p-5 rounded-3xl bg-[#131625] border border-white/5 hover:border-purple-400/40 transition-all duration-300';
+                }
+            });
+
+            const data = isolationMatrixData[idx];
+            document.getElementById('matrixLevelTitle').innerText = `المستوى المختار: ${data.name}`;
+            document.getElementById('matrixLevelDesc').innerText = data.desc;
+
+            const tbody = document.getElementById('matrixTableBody');
+            tbody.innerHTML = '';
+            data.phenomena.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.className = 'py-3';
+                tr.innerHTML = `
+                    <td class="py-3 font-semibold text-white">${p.name}</td>
+                    <td class="py-3">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold ${p.status ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}">
+                            ${p.status ? 'محمي ✓' : 'غير محمي ✗'}
+                        </span>
+                    </td>
+                    <td class="py-3 text-slate-400 text-xs">${p.note}</td>
+                `;
+                tbody.appendChild(tr);
+            });
         }
 
-        function updateIsoUI(index) {
-            const config = isoLevels.find(l => l.id === index);
-            
-            const checkDR = document.getElementById('checkDR');
-            const checkNRR = document.getElementById('checkNRR');
-            const checkPR = document.getElementById('checkPR');
-            const checkLU = document.getElementById('checkLU');
-            
-            const txt = (en, ar) => isArabic ? ar : en;
+        // Section 7: WAL Sync Mode
+        function setWalMode(mode) {
+            const btnSync = document.getElementById('btnWalSync');
+            const btnAsync = document.getElementById('btnWalAsync');
+            const box = document.getElementById('walExplanationBox');
 
-            checkDR.className = `iso-check ${config.dr ? 'active' : ''}`;
-            checkDR.innerHTML = `<span>${config.dr ? '✅' : '❌'}</span> <span>${txt('Dirty Read', 'القراءة القذرة')}</span>`;
-            
-            checkNRR.className = `iso-check ${config.nrr ? 'active' : ''}`;
-            checkNRR.innerHTML = `<span>${config.nrr ? '✅' : '❌'}</span> <span>${txt('Non-Repeatable Read', 'قراءة غير قابلة للتكرار')}</span>`;
-            
-            checkPR.className = `iso-check ${config.pr ? 'active' : ''}`;
-            checkPR.innerHTML = `<span>${config.pr ? '✅' : '❌'}</span> <span>${txt('Phantom Read', 'القراءة الوهمية')}</span>`;
-            
-            checkLU.className = `iso-check ${config.lu ? 'active' : ''}`;
-            checkLU.innerHTML = `<span>${config.lu ? '✅' : '❌'}</span> <span>${txt('Lost Update', 'التحديث المفقود')}</span>`;
+            if (mode === 'sync') {
+                btnSync.className = 'px-4 py-1.5 rounded-xl bg-purple-600 text-white text-xs font-bold transition';
+                btnAsync.className = 'px-4 py-1.5 rounded-xl text-slate-400 hover:text-white text-xs font-bold transition';
+                box.innerHTML = `
+                    <div class="text-emerald-400 font-bold">Synchronous Commit (fsync = on) — الأمان الأقصى</div>
+                    <div class="text-slate-300">
+                        في هذا الوضع، لا يُرد على المستخدم بنجاح الـ Commit إلا بعد كتابة سجل الـ WAL فعلياً على القرص الصلب (Hard Disk flush).
+                    </div>
+                    <div class="text-xs text-slate-400">
+                        • الميزة: صفر فقدان للبيانات في حال انقطاع الكهرباء المفاجئ.<br>
+                        • المقابل: بطء طفيف لأن العملية تنتظر سرعة الكتابة على القرص (I/O latency).
+                    </div>
+                `;
+            } else {
+                btnAsync.className = 'px-4 py-1.5 rounded-xl bg-purple-600 text-white text-xs font-bold transition';
+                btnSync.className = 'px-4 py-1.5 rounded-xl text-slate-400 hover:text-white text-xs font-bold transition';
+                box.innerHTML = `
+                    <div class="text-amber-400 font-bold">Asynchronous Commit (fsync = off / async) — الأداء الفائق</div>
+                    <div class="text-slate-300">
+                        تقوم قاعدة البيانات بالرد فوراً على المستخدم بمجرد كتابة التغيير في الذاكرة (Memory Buffer)، ويتم تفريغ السجل إلى القرص في الخلفية لاحقاً.
+                    </div>
+                    <div class="text-xs text-slate-400">
+                        • الميزة: سرعة كتابة هائلة وتجاوز عقبة الـ Disk I/O.<br>
+                        • الخطر: إذا انقطعت الكهرباء فجأة، قد تفقد العمليات التي تمت في آخر أجزاء من الثانية (تصل لـ 20ms في PostgreSQL).
+                    </div>
+                `;
+            }
         }
+
+        // Initialize on DOM Load
+        document.addEventListener('DOMContentLoaded', () => {
+            renderTimelineSteps();
+            selectIsoLevel(2); // Default to Repeatable Read
+            setWalMode('sync');
+        });
     </script>
 </body>
 </html>

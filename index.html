@@ -296,7 +296,7 @@
 
         </section>
 
-        <!-- SECTION 1: WHAT IS A TRANSACTION? (TechVault Slides 2 to 6) -->
+        <!-- SECTION 1: WHAT IS A TRANSACTION? -->
         <section id="intro" class="space-y-10">
             
             <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-black/10 dark:border-white/10 pb-6">
@@ -312,7 +312,7 @@
                 </p>
             </div>
 
-            <!-- Real-World Payment Flow (TechVault PDF Slide 2 & 3) -->
+            <!-- Real-World Payment Flow -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
                 
                 <!-- Left: Interactive Flow Simulator -->
@@ -494,7 +494,7 @@
                         <span class="w-2 h-2 rounded-full bg-purple-500"></span>
                         <span data-en="Module 02 • Core Guarantees" data-ar="الوحدة الثانية • ضمانات المعاملة">الوحدة الثانية • ضمانات المعاملة</span>
                     </div>
-                    <h2 class="text-3xl sm:text-4xl font-black" style="color: var(--clay-text-primary)" data-en="ACID Properties Deep Dive" data-ar="خصائص ACID بالتفصيل كما بالـ PDF">خصائص ACID بالتفصيل كما بالـ PDF</h2>
+                    <h2 class="text-3xl sm:text-4xl font-black" style="color: var(--clay-text-primary)" data-en="ACID Properties Deep Dive" data-ar="خصائص ACID بالتفصيل والضمانات الأربعة">خصائص ACID بالتفصيل والضمانات الأربعة</h2>
                 </div>
                 <p class="text-sm max-w-md" style="color: var(--clay-text-secondary)" data-en="Atomicity, Consistency, Isolation, Durability — the four cornerstones of dependable database transactions." data-ar="الذرية، الاتساق، العزل، والمتانة — الركائز الأربع لضمان سلامة البيانات المطلقة.">
                     الذرية، الاتساق، العزل، والمتانة — الركائز الأربع لضمان سلامة البيانات المطلقة.
@@ -543,7 +543,7 @@
                 <div id="acidContentA" class="acid-content-panel space-y-8">
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
-                            <span class="text-xs font-bold text-purple-600 dark:text-axLavender uppercase tracking-wider font-mono">SLIDES 8 & 9 VISUAL SIMULATOR</span>
+                            <span class="text-xs font-bold text-purple-600 dark:text-axLavender uppercase tracking-wider font-mono">TRANSACTION ATOMICITY SIMULATOR</span>
                             <h3 class="text-2xl font-bold mt-1" style="color: var(--clay-text-primary)" data-en="Atomicity: Account Transfer A ($500) → B ($200)" data-ar="الذرية: تحويل بنكي من الحساب A ($500) إلى الحساب B ($200)">الذرية: تحويل بنكي من الحساب A ($500) إلى الحساب B ($200)</h3>
                         </div>
                         <!-- Mode Selector -->
@@ -697,24 +697,24 @@
                     </div>
                     <h2 class="text-3xl sm:text-4xl font-black" style="color: var(--clay-text-primary)" data-en="Common Problems with Concurrent Transactions" data-ar="مشاكل التزامن بالتوقيت الزمني الدقيق (T1 vs T2)">مشاكل التزامن بالتوقيت الزمني الدقيق (T1 vs T2)</h2>
                 </div>
-                <p class="text-sm max-w-md" style="color: var(--clay-text-secondary)" data-en="Interactive step-by-step reproduction of Lost Update, Dirty Read, Non-repeatable Read, and Phantom Read from the TechVault slides." data-ar="محاكاة تفاعلية خطوة بخطوة لكل من التحديث المفقود، القراءة القذرة، والقراءة غير المتكررة كما تم شرحها بسلايدات TechVault 10-16.">
-                    محاكاة تفاعلية خطوة بخطوة لكل من التحديث المفقود، القراءة القذرة، والقراءة غير المتكررة كما تم شرحها بسلايدات TechVault 10-16.
+                <p class="text-sm max-w-md" style="color: var(--clay-text-secondary)" data-en="Interactive step-by-step reproduction of Lost Update, Dirty Read, Non-repeatable Read, and Phantom Read in relational databases." data-ar="محاكاة تفاعلية خطوة بخطوة لكل من التحديث المفقود، القراءة القذرة، والقراءة غير المتكررة في قواعد البيانات.">
+                    محاكاة تفاعلية خطوة بخطوة لكل من التحديث المفقود، القراءة القذرة، والقراءة غير المتكررة في قواعد البيانات.
                 </p>
             </div>
 
             <!-- Problem Tabs -->
             <div class="flex flex-wrap items-center gap-3">
                 <button onclick="switchProblem('lostUpdate')" id="pTab-lostUpdate" class="problem-tab-btn clay-btn-purple px-5 py-3 text-xs sm:text-sm font-bold">
-                    1. Lost Update (Slide 12)
+                    1. Lost Update (التحديث المفقود)
                 </button>
                 <button onclick="switchProblem('dirtyRead')" id="pTab-dirtyRead" class="problem-tab-btn clay-btn-neutral px-5 py-3 text-xs sm:text-sm font-bold">
-                    2. Dirty Read (Slides 14 & 15)
+                    2. Dirty Read (القراءة القذرة)
                 </button>
                 <button onclick="switchProblem('nonRepeatable')" id="pTab-nonRepeatable" class="problem-tab-btn clay-btn-neutral px-5 py-3 text-xs sm:text-sm font-bold">
-                    3. Non-repeatable Read (Slide 16)
+                    3. Non-repeatable Read (القراءة غير المتكررة)
                 </button>
                 <button onclick="switchProblem('phantom')" id="pTab-phantom" class="problem-tab-btn clay-btn-neutral px-5 py-3 text-xs sm:text-sm font-bold">
-                    4. Phantom Read
+                    4. Phantom Read (القراءة الوهمية)
                 </button>
             </div>
 
@@ -807,7 +807,7 @@
                         <span class="w-2 h-2 rounded-full bg-purple-500"></span>
                         <span data-en="Module 04 • The Shield" data-ar="الوحدة الرابعة • درع الحماية">الوحدة الرابعة • درع الحماية</span>
                     </div>
-                    <h2 class="text-3xl sm:text-4xl font-black" style="color: var(--clay-text-primary)" data-en="SQL Isolation Levels Ladder" data-ar="سلم مستويات العزل الأربعة (Slide 17)">سلم مستويات العزل الأربعة (Slide 17)</h2>
+                    <h2 class="text-3xl sm:text-4xl font-black" style="color: var(--clay-text-primary)" data-en="SQL Isolation Levels Ladder" data-ar="سلم مستويات العزل الأربعة (Isolation Levels)">سلم مستويات العزل الأربعة (Isolation Levels)</h2>
                 </div>
                 <p class="text-sm max-w-md" style="color: var(--clay-text-secondary)" data-en="The higher the isolation level, the more anomalies are prevented, but with trade-offs in concurrent throughput." data-ar="كلما صعدت في مستوى العزل، تخلصت من مشاكل التزامن أكثر، ولكن بمقابل انخفاض طفيف في سرعة التنفيذ (Throughput).">
                     كلما صعدت في مستوى العزل، تخلصت من مشاكل التزامن أكثر، ولكن بمقابل انخفاض طفيف في سرعة التنفيذ (Throughput).
@@ -974,6 +974,171 @@
                 </div>
             </div>
 
+            <!-- SUBSECTION: LOCK COMPATIBILITY & GRANULARITY TABLES -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                
+                <!-- Table 1: S vs X Compatibility Matrix -->
+                <div class="clay-card p-6 sm:p-8 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-lg font-bold" style="color: var(--clay-text-primary)">جدول توافق الأقفال (Lock Compatibility Matrix)</h4>
+                        <span class="text-xs px-2.5 py-1 rounded-full clay-pill font-mono font-bold text-purple-600 dark:text-axLavender">S vs X</span>
+                    </div>
+                    <p class="text-xs" style="color: var(--clay-text-secondary)">
+                        يوضح ما يحدث عندما تمتلك المعاملة T1 قفلاً على مورد، وتطلب المعاملة T2 قفلاً آخر على نفس المورد:
+                    </p>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-right rtl:text-right ltr:text-left text-xs">
+                            <thead>
+                                <tr class="border-b border-black/10 dark:border-white/10" style="color: var(--clay-text-muted)">
+                                    <th class="pb-2 font-semibold">قفل T1 الحالي \ طلب T2</th>
+                                    <th class="pb-2 font-semibold">Shared (قراءة)</th>
+                                    <th class="pb-2 font-semibold">Exclusive (كتابة)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-black/5 dark:divide-white/5 font-mono">
+                                <tr>
+                                    <td class="py-3 font-bold" style="color: var(--clay-text-primary)">Shared Lock (S)</td>
+                                    <td class="py-3 text-emerald-500 font-bold">✅ متوافق (Granted)</td>
+                                    <td class="py-3 text-red-500 font-bold">⏳ حجب وانتظار (Blocked)</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-3 font-bold" style="color: var(--clay-text-primary)">Exclusive Lock (X)</td>
+                                    <td class="py-3 text-red-500 font-bold">⏳ حجب وانتظار (Blocked)</td>
+                                    <td class="py-3 text-red-500 font-bold">⏳ حجب وانتظار (Blocked)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="p-3.5 rounded-xl clay-inset text-[11px]" style="color: var(--clay-text-secondary)">
+                        💡 <span class="font-bold">القاعدة الأساسية:</span> عدة معاملات يمكنها مشاركة قفل القراءة (S + S)، بينما قفل الكتابة (X) يطرد الجميع ويحجب القراءة والكتابة.
+                    </div>
+                </div>
+
+                <!-- Table 2: Row-level vs Table-level Interaction Table -->
+                <div class="clay-card p-6 sm:p-8 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-lg font-bold" style="color: var(--clay-text-primary)">تفاعل قفل الصف وقفل الجدول بين معاملتين</h4>
+                        <span class="text-xs px-2.5 py-1 rounded-full clay-pill font-mono font-bold text-cyan-500">Row vs Table</span>
+                    </div>
+                    <p class="text-xs" style="color: var(--clay-text-secondary)">
+                        ماذا يحدث عندما تنفذ معاملتان أقفالاً بمستويات تحجيم مختلفة على نفس الجدول؟
+                    </p>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-right rtl:text-right ltr:text-left text-xs">
+                            <thead>
+                                <tr class="border-b border-black/10 dark:border-white/10" style="color: var(--clay-text-muted)">
+                                    <th class="pb-2 font-semibold">حالة المعاملة T1</th>
+                                    <th class="pb-2 font-semibold">طلب المعاملة T2</th>
+                                    <th class="pb-2 font-semibold">النتيجة</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-black/5 dark:divide-white/5 text-[11px]">
+                                <tr>
+                                    <td class="py-2.5 font-bold font-mono text-purple-500">Row X (الصف 1)</td>
+                                    <td class="py-2.5 font-mono">Row X (الصف 2)</td>
+                                    <td class="py-2.5 text-emerald-500 font-bold">✅ متوافق (تعملان بالتوازي دون حجب)</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2.5 font-bold font-mono text-purple-500">Row X (الصف 1)</td>
+                                    <td class="py-2.5 font-mono">Row X (الصف 1)</td>
+                                    <td class="py-2.5 text-red-500 font-bold">⏳ حجب (تنتظر T2 إنهاء T1)</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2.5 font-bold font-mono text-cyan-500">Row S (الصف 1)</td>
+                                    <td class="py-2.5 font-mono">Row S (الصف 1)</td>
+                                    <td class="py-2.5 text-emerald-500 font-bold">✅ متوافق (قراءة مشتركة لنفس الصف)</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2.5 font-bold font-mono text-purple-500">Row X (الصف 1)</td>
+                                    <td class="py-2.5 font-mono">Table Lock (X)</td>
+                                    <td class="py-2.5 text-red-500 font-bold">⏳ حجب (قفل الجدول ممنوع لوجود صف محجوز)</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2.5 font-bold font-mono text-amber-500">Table Lock (X)</td>
+                                    <td class="py-2.5 font-mono">Row X / S (أي صف)</td>
+                                    <td class="py-2.5 text-red-500 font-bold">⏳ حجب كامل (كل صفوف الجدول معطلة)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- INTERACTIVE TWO-TRANSACTION LOCK SIMULATOR -->
+            <div class="clay-card p-6 sm:p-10 space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-black/5 dark:border-white/10">
+                    <div>
+                        <span class="text-xs font-bold px-3 py-1 rounded-full clay-pill text-purple-600 dark:text-axLavender font-mono">INTERACTIVE 2-TRANSACTION LOCK LAB</span>
+                        <h3 class="text-2xl font-bold mt-2" style="color: var(--clay-text-primary)">محاكي تعارض الأقفال بين معاملتين (Interactive Lock Simulator)</h3>
+                        <p class="text-xs mt-1" style="color: var(--clay-text-secondary)">
+                            اختر نوع القفل الذي تملكه المعاملة T1، ثم اختر ما تحاول المعاملة T2 طلبه، وشاهد فوراً كيف يستجيب محرك قاعدة البيانات!
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Selectors Controls -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div class="p-5 rounded-2xl clay-inset space-y-3">
+                        <label class="block text-xs font-bold text-purple-600 dark:text-axLavender">1. المعاملة الأولى T1 تمتلك قفل:</label>
+                        <select id="simLockT1" onchange="runLockSimulator()" class="w-full p-3 rounded-xl clay-card text-xs font-bold cursor-pointer" style="color: var(--clay-text-primary)">
+                            <option value="row-x-1">قفل حصري على الصف 1 (Row X-Lock on Row 1)</option>
+                            <option value="row-s-1">قفل مشترك على الصف 1 (Row S-Lock on Row 1)</option>
+                            <option value="table-x">قفل حصري على الجدول بأكمله (Table X-Lock)</option>
+                            <option value="none">لا يوجد قفل (No Lock)</option>
+                        </select>
+                    </div>
+
+                    <div class="p-5 rounded-2xl clay-inset space-y-3">
+                        <label class="block text-xs font-bold text-cyan-500">2. المعاملة الثانية T2 تحاول طلب:</label>
+                        <select id="simLockT2" onchange="runLockSimulator()" class="w-full p-3 rounded-xl clay-card text-xs font-bold cursor-pointer" style="color: var(--clay-text-primary)">
+                            <option value="row-x-1">تعديل نفس الصف 1 (Request Row X on Row 1)</option>
+                            <option value="row-s-1">قراءة نفس الصف 1 (Request Row S on Row 1)</option>
+                            <option value="row-x-2">تعديل صف آخر: الصف 2 (Request Row X on Row 2)</option>
+                            <option value="table-x">قفل الجدول بأكمله (Request Table X-Lock)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Live Visual Canvas: Database Table -->
+                <div class="p-6 rounded-3xl clay-inset space-y-4">
+                    <div class="flex items-center justify-between text-xs font-bold" style="color: var(--clay-text-muted)">
+                        <span>DATABASE TABLE: <span class="text-purple-500 font-mono">accounts</span></span>
+                        <span id="simTableLockBadge" class="px-2.5 py-0.5 rounded-full clay-pill text-[10px]">Table Status: Unlocked</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 font-mono text-xs">
+                        <!-- Row 1 -->
+                        <div id="simRow1Box" class="p-4 rounded-2xl clay-card space-y-2 border-2 transition-all duration-300">
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold" style="color: var(--clay-text-primary)">Row 1 (User: Alice)</span>
+                                <span id="simRow1Status" class="px-2 py-0.5 rounded-lg text-[10px] font-bold clay-pill">Free</span>
+                            </div>
+                            <div class="text-slate-400 text-[11px]">Balance: $1000</div>
+                            <div id="simRow1Action" class="text-[11px] text-purple-400">T1: Idle</div>
+                        </div>
+
+                        <!-- Row 2 -->
+                        <div id="simRow2Box" class="p-4 rounded-2xl clay-card space-y-2 border-2 transition-all duration-300">
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold" style="color: var(--clay-text-primary)">Row 2 (User: Bob)</span>
+                                <span id="simRow2Status" class="px-2 py-0.5 rounded-lg text-[10px] font-bold clay-pill">Free</span>
+                            </div>
+                            <div class="text-slate-400 text-[11px]">Balance: $500</div>
+                            <div id="simRow2Action" class="text-[11px] text-cyan-400">T2: Idle</div>
+                        </div>
+                    </div>
+
+                    <!-- Outcome Banner -->
+                    <div id="simOutcomeBanner" class="p-4 rounded-2xl clay-card transition-all duration-300 flex items-center justify-between flex-wrap gap-4">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </div>
+
+            </div>
+
         </section>
 
         <!-- SECTION 6: MVCC (Optimistic Concurrency Control) -->
@@ -1037,6 +1202,122 @@
 
                     <div class="p-4 rounded-xl clay-card text-xs" style="color: var(--clay-text-primary)">
                         <span class="text-purple-600 dark:text-axLavender font-bold">✨ السحر في ذلك:</span> إذا كانت معاملة سابقة بدأت عند TxID 102، ستقرأ بهدوء Version 1 ($500) دون أن تنتظر المعاملة 105 ودون أن تتأثر بها!
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- SUBSECTION: LOCKING VS MVCC COMPARISON TABLE & ANIMATED SIMULATION -->
+            <div class="clay-card p-6 sm:p-10 space-y-8 mt-10">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-black/5 dark:border-white/10">
+                    <div>
+                        <span class="text-xs font-bold px-3 py-1 rounded-full clay-pill text-cyan-500 font-mono">PESSIMISTIC LOCKING vs OPTIMISTIC MVCC</span>
+                        <h3 class="text-2xl font-bold mt-2" style="color: var(--clay-text-primary)">المقارنة المعمارية: نظام الأقفال المتشائم (Locking) ضد محرك تعدد النسخ (MVCC)</h3>
+                        <p class="text-xs mt-1" style="color: var(--clay-text-secondary)">
+                            جدول تفصيلي ومحاكاة متحركة لكيفية تصرف المعاملات المتزامنة في كل نظام:
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Comprehensive Comparison Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right rtl:text-right ltr:text-left text-xs sm:text-sm">
+                        <thead>
+                            <tr class="border-b border-black/10 dark:border-white/10" style="color: var(--clay-text-muted)">
+                                <th class="pb-3 font-semibold">حالة السيناريو (Scenario)</th>
+                                <th class="pb-3 font-semibold text-purple-600 dark:text-axLavender">نظام الأقفال المتشائم (Locking)</th>
+                                <th class="pb-3 font-semibold text-cyan-500">محرك تعدد النسخ (MVCC)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-black/5 dark:divide-white/5 text-xs">
+                            <tr>
+                                <td class="py-3.5 font-bold" style="color: var(--clay-text-primary)">1. قراءة ثم كتابة (T1 تقرأ، T2 تكتب)</td>
+                                <td class="py-3.5 text-red-500 font-medium">⏳ T2 تُحجب بالكامل وتنتظر انتهاء T1 من القراءة.</td>
+                                <td class="py-3.5 text-emerald-500 font-bold">🚀 T2 تكتب نسخة جديدة فوراً دون أي تعطيل لـ T1!</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3.5 font-bold" style="color: var(--clay-text-primary)">2. كتابة ثم قراءة (T1 تكتب، T2 تقرأ)</td>
+                                <td class="py-3.5 text-red-500 font-medium">⏳ T2 تُحجب بالكامل وتنتظر حتى تعمل T1 Commit.</td>
+                                <td class="py-3.5 text-emerald-500 font-bold">🚀 T2 تقرأ النسخة القديمة المؤكدة من الـ Undo Log فوراً!</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3.5 font-bold" style="color: var(--clay-text-primary)">3. كتابة متزامنة (T1 و T2 تعدلان نفس الصف)</td>
+                                <td class="py-3.5" style="color: var(--clay-text-secondary)">تنتظر T2 في طابور القفل الحصري (X-Lock).</td>
+                                <td class="py-3.5" style="color: var(--clay-text-secondary)">تنتظر قفل الصف أو تفشل T2 وتعمل Rollback مع إعادة المحاولة.</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3.5 font-bold" style="color: var(--clay-text-primary)">4. احتمالية حدوث Deadlock</td>
+                                <td class="py-3.5 text-amber-500 font-medium">مرتفعة جداً عند تشابك أقفال القراءة والكتابة.</td>
+                                <td class="py-3.5 text-emerald-500 font-medium">منخفضة جداً (لأن القراءة لا تحجز أي أقفال إطلاقاً).</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3.5 font-bold" style="color: var(--clay-text-primary)">5. استهلاك الذاكرة والقرص</td>
+                                <td class="py-3.5" style="color: var(--clay-text-secondary)">منخفض (جداول أقفال صغيرة في الرام).</td>
+                                <td class="py-3.5" style="color: var(--clay-text-secondary)">أعلى (الاحتفاظ بنسخ تاريخية متعددة والـ Vacuuming).</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- SIDE-BY-SIDE ANIMATED SIMULATOR -->
+                <div class="space-y-4 pt-4 border-t border-black/5 dark:border-white/10">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h4 class="text-base font-bold" style="color: var(--clay-text-primary)">محاكاة متحركة للمقارنة: Locking مقابل MVCC عند تعارض (Write vs Read)</h4>
+                            <p class="text-xs" style="color: var(--clay-text-secondary)">شاهد كيف تستجيب المعاملتان T1 و T2 في كلا النظامين في نفس اللحظة:</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="runMvccComparisonAnim()" class="clay-btn-purple px-5 py-2.5 text-xs font-bold flex items-center gap-2">
+                                <span>▶ تشغيل المقارنة المتحركة</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Side-by-side Animated Panels -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        
+                        <!-- Panel Left: Traditional Locking -->
+                        <div class="p-6 rounded-3xl clay-inset space-y-4">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-red-500 uppercase font-mono">1. TRADITIONAL PESSIMISTIC LOCKING</span>
+                                <span id="lockAnimBadge" class="text-xs px-2.5 py-0.5 rounded-md clay-pill font-bold text-slate-400">Idle</span>
+                            </div>
+                            <div class="h-36 flex flex-col justify-center items-center text-center space-y-3">
+                                <div id="lockAnimT1" class="text-xs font-mono font-bold text-purple-500">T1: Begin Transaction</div>
+                                <div id="lockAnimDoor" class="w-16 h-16 rounded-2xl clay-card flex items-center justify-center text-2xl transition-all duration-300">
+                                    🔓
+                                </div>
+                                <div id="lockAnimT2" class="text-xs font-mono font-bold text-cyan-500">T2: Waiting to execute</div>
+                            </div>
+                            <div id="lockAnimNote" class="text-[11px] text-center text-slate-400 font-mono">
+                                اضغط على "تشغيل المقارنة المتحركة" لبدء المحاكاة.
+                            </div>
+                        </div>
+
+                        <!-- Panel Right: MVCC Engine -->
+                        <div class="p-6 rounded-3xl clay-inset space-y-4">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-emerald-500 uppercase font-mono">2. MVCC ENGINE (OPTIMISTIC SNAPSHOT)</span>
+                                <span id="mvccAnimBadge" class="text-xs px-2.5 py-0.5 rounded-md clay-pill font-bold text-slate-400">Idle</span>
+                            </div>
+                            <div class="h-36 flex flex-col justify-center items-center text-center space-y-3">
+                                <div id="mvccAnimT1" class="text-xs font-mono font-bold text-purple-500">T1: Begin Transaction</div>
+                                <div class="flex items-center justify-center gap-3">
+                                    <div id="mvccV1Bubble" class="px-3 py-2 rounded-xl clay-card text-[11px] font-mono font-bold text-slate-400 transition-all duration-300">
+                                        Snapshot V1 (Committed)
+                                    </div>
+                                    <span class="text-purple-400 font-bold">➔</span>
+                                    <div id="mvccV2Bubble" class="px-3 py-2 rounded-xl clay-card text-[11px] font-mono font-bold text-emerald-500 transition-all duration-300 opacity-30">
+                                        New V2 (Writing)
+                                    </div>
+                                </div>
+                                <div id="mvccAnimT2" class="text-xs font-mono font-bold text-cyan-500">T2: Waiting to execute</div>
+                            </div>
+                            <div id="mvccAnimNote" class="text-[11px] text-center text-slate-400 font-mono">
+                                اضغط على "تشغيل المقارنة المتحركة" لبدء المحاكاة.
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
@@ -1372,8 +1653,8 @@
         // Section 3: Concurrency Problems Timeline Data
         const problemData = {
             lostUpdate: {
-                title: 'Lost Update (التحديث المفقود - Slide 12)',
-                badge: 'TECHVAULT SLIDE 12',
+                title: 'Lost Update (التحديث المفقود)',
+                badge: 'CONCURRENCY ANOMALY',
                 desc: 'معاملتان تقومان بقراءة نفس الحساب (A=500) في نفس الوقت. الأولى تطرح 100 وتكتب 400، والثانية تضيف 50 وتكتب 550. كتابة المعاملة الثانية مسحت تعديل المعاملة الأولى تماماً فتبخرت 100$!',
                 before: 'A = 500, B = 200 (Total = 700)',
                 after: 'Actual: A = 550, B = 300 (Total = 850!) ⚠️ Lost 100$',
@@ -1389,8 +1670,8 @@
                 ]
             },
             dirtyRead: {
-                title: 'Dirty Read (القراءة القذرة - Slides 14 & 15)',
-                badge: 'TECHVAULT SLIDES 14 & 15',
+                title: 'Dirty Read (القراءة القذرة)',
+                badge: 'UNCOMMITTED DATA READ',
                 desc: 'المعاملة T1 تعدل البيانات ولم تقم بعمل Commit بعد. المعاملة T2 تقرأ هذه القيمة غير المؤكدة. ثم تفشل T1 وتعمل Rollback! تصبح T2 تعمل على أرقام وهمية لم توجد رسمياً!',
                 before: 'A = 500, B = 200',
                 after: 'T2 اعتمدت على 400$ التي تم إلغاؤها لاحقاً!',
@@ -1404,8 +1685,8 @@
                 ]
             },
             nonRepeatable: {
-                title: 'Non-repeatable Read (قراءة غير متكررة - Slide 16)',
-                badge: 'TECHVAULT SLIDE 16',
+                title: 'Non-repeatable Read (قراءة غير متكررة)',
+                badge: 'FUZZY READ ANOMALY',
                 desc: 'المعاملة T1 تقرأ صفاً معيناً، ثم تقوم المعاملة T2 بتعديل ذلك الصف وعمل Commit. عندما تعيد T1 قراءة نفس الصف داخل نفس المعاملة تجد قيمة مختلفة تماماً!',
                 before: 'A = 500',
                 after: 'T1 قرأت A=500 ثم قرأت A=550 داخل نفس المعاملة!',
@@ -1630,12 +1911,172 @@
             }
         }
 
+        // Section 5: Interactive 2-Transaction Lock Simulator
+        function runLockSimulator() {
+            const t1 = document.getElementById('simLockT1').value;
+            const t2 = document.getElementById('simLockT2').value;
+
+            const row1Box = document.getElementById('simRow1Box');
+            const row2Box = document.getElementById('simRow2Box');
+            const row1Status = document.getElementById('simRow1Status');
+            const row2Status = document.getElementById('simRow2Status');
+            const row1Action = document.getElementById('simRow1Action');
+            const row2Action = document.getElementById('simRow2Action');
+            const tableBadge = document.getElementById('simTableLockBadge');
+            const outcome = document.getElementById('simOutcomeBanner');
+
+            // Reset styles
+            row1Box.classList.remove('border-purple-500', 'border-red-500', 'border-cyan-500');
+            row2Box.classList.remove('border-purple-500', 'border-red-500', 'border-cyan-500');
+            tableBadge.innerText = 'Table Status: Unlocked';
+            tableBadge.className = 'px-2.5 py-0.5 rounded-full clay-pill text-[10px]';
+
+            let isBlocked = false;
+            let explanation = '';
+
+            // Evaluate T1 state
+            if (t1 === 'row-x-1') {
+                row1Status.innerText = 'X-Lock (T1)';
+                row1Status.className = 'px-2 py-0.5 rounded-lg text-[10px] font-bold clay-pill text-purple-600 dark:text-axLavender';
+                row1Box.classList.add('border-purple-500');
+                row1Action.innerText = 'T1: Modifying Row 1 (Exclusive Lock 🔒)';
+            } else if (t1 === 'row-s-1') {
+                row1Status.innerText = 'S-Lock (T1)';
+                row1Status.className = 'px-2 py-0.5 rounded-lg text-[10px] font-bold clay-pill text-cyan-500';
+                row1Box.classList.add('border-cyan-500');
+                row1Action.innerText = 'T1: Reading Row 1 (Shared Lock 📖)';
+            } else if (t1 === 'table-x') {
+                tableBadge.innerText = 'Table Status: Locked by T1 (Table X-Lock 🔒)';
+                tableBadge.className = 'px-2.5 py-0.5 rounded-full clay-pill text-[10px] text-red-500 font-bold';
+                row1Action.innerText = 'T1: Whole Table Locked';
+                row2Action.innerText = 'T1: Whole Table Locked';
+            } else {
+                row1Status.innerText = 'Free';
+                row1Status.className = 'px-2 py-0.5 rounded-lg text-[10px] font-bold clay-pill';
+                row1Action.innerText = 'T1: Idle';
+                row2Action.innerText = 'T2: Idle';
+            }
+
+            // Evaluate Conflict with T2
+            if (t1 === 'table-x') {
+                isBlocked = true;
+                explanation = 'المعاملة T2 محجوبة بالكامل! T1 تمتلك قفلاً حصرياً على الجدول بأكمله (Table-Level Lock)، فلا يمكن لأي معاملة أخرى قراءة أو كتابة أي صف حتى انتهاء T1.';
+            } else if (t2 === 'table-x' && t1 !== 'none') {
+                isBlocked = true;
+                explanation = 'المعاملة T2 طلبت قفل الجدول بأكمله، ولكن T1 تمتلك قفلاً فرعياً على أحد الصفوف (Intent Lock Conflict)، فتنتظر T2 حتى تنهي T1 معاملتها.';
+            } else if (t1 === 'row-x-1' && t2 === 'row-x-1') {
+                isBlocked = true;
+                explanation = 'تعارض قفل حصري (X vs X): المعاملة T1 تعدل الصف 1 وتطلب T2 تعديل نفس الصف في نفس الوقت. تُحجب T2 وتنتظر في طابور الأقفال ⏳.';
+            } else if (t1 === 'row-x-1' && t2 === 'row-s-1') {
+                isBlocked = true;
+                explanation = 'تعارض قفل كاتب مع قارئ (X vs S): T1 تعدل الصف 1 وتطلب T2 قراءته. تُمنع T2 لمنع حدوث قراءة قذرة (Dirty Read) وتنتظر حتى Commit ⏳.';
+            } else if (t1 === 'row-s-1' && t2 === 'row-x-1') {
+                isBlocked = true;
+                explanation = 'تعارض قفل قارئ مع كاتب (S vs X): T1 تقرأ الصف 1 بقفل مشترك وتطلب T2 تعديله. يُمنع التعديل حتى تنتهي T1 منعاً لتغير البيانات أثناء القراءة.';
+            } else if (t1 === 'row-s-1' && t2 === 'row-s-1') {
+                isBlocked = false;
+                explanation = 'توافق تام (S + S): كلا المعاملتين تطلبان القراءة فقط! يُسمح لكليهما بقراءة نفس الصف معاً في نفس اللحظة دون أي حجب أو انتظار ✓.';
+            } else if (t2 === 'row-x-2') {
+                isBlocked = false;
+                row2Status.innerText = 'X-Lock (T2)';
+                row2Status.className = 'px-2 py-0.5 rounded-lg text-[10px] font-bold clay-pill text-cyan-500';
+                row2Box.classList.add('border-cyan-500');
+                row2Action.innerText = 'T2: Modifying Row 2 (Allowed)';
+                explanation = 'توافق عبر مستوى الصفوف (Row-Level Independence): T1 تعمل على الصف 1 بينما T2 تعمل على الصف 2، لا يوجد أي تعارض وتعملان معاً بالتوازي وبأقصى سرعة! ✓';
+            } else {
+                isBlocked = false;
+                explanation = 'لا يوجد أي تعارض قائم. تم منح القفل لـ T2 فوراً وبدأت التنفيذ.';
+            }
+
+            if (isBlocked) {
+                outcome.className = 'p-4 rounded-2xl clay-card border border-red-500/40 bg-red-500/5 flex items-center justify-between flex-wrap gap-4';
+                outcome.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">⏳</span>
+                        <div>
+                            <div class="text-red-500 font-bold text-sm">حالة المعاملة T2: محجوبة في طابور الانتظار (BLOCKED & QUEUED)</div>
+                            <div class="text-xs text-slate-400 mt-0.5">${explanation}</div>
+                        </div>
+                    </div>
+                    <span class="px-3 py-1 rounded-full clay-pill text-red-500 font-bold text-xs">Conflict Detected ⛔</span>
+                `;
+            } else {
+                outcome.className = 'p-4 rounded-2xl clay-card border border-emerald-500/40 bg-emerald-500/5 flex items-center justify-between flex-wrap gap-4';
+                outcome.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">✅</span>
+                        <div>
+                            <div class="text-emerald-500 font-bold text-sm">حالة المعاملة T2: مسموح بالتنفيذ فوراً (GRANTED & EXECUTING)</div>
+                            <div class="text-xs text-slate-400 mt-0.5">${explanation}</div>
+                        </div>
+                    </div>
+                    <span class="px-3 py-1 rounded-full clay-pill text-emerald-500 font-bold text-xs">Compatible ✓</span>
+                `;
+            }
+        }
+
+        // Section 6: MVCC vs Locking Animated Comparison
+        function runMvccComparisonAnim() {
+            const lockDoor = document.getElementById('lockAnimDoor');
+            const lockT1 = document.getElementById('lockAnimT1');
+            const lockT2 = document.getElementById('lockAnimT2');
+            const lockBadge = document.getElementById('lockAnimBadge');
+            const lockNote = document.getElementById('lockAnimNote');
+
+            const mvccT1 = document.getElementById('mvccAnimT1');
+            const mvccT2 = document.getElementById('mvccAnimT2');
+            const mvccBadge = document.getElementById('mvccAnimBadge');
+            const mvccV1 = document.getElementById('mvccV1Bubble');
+            const mvccV2 = document.getElementById('mvccV2Bubble');
+            const mvccNote = document.getElementById('mvccAnimNote');
+
+            // Step 1: T1 writes
+            lockT1.innerText = 'T1: Acquiring X-Lock on Row...';
+            lockDoor.innerText = '🔒';
+            lockDoor.classList.add('border-red-500');
+            lockBadge.innerText = 'Locked by T1';
+            lockBadge.className = 'text-xs px-2.5 py-0.5 rounded-md clay-pill font-bold text-red-500';
+
+            mvccT1.innerText = 'T1: Modifying row (creating V2)...';
+            mvccV2.classList.remove('opacity-30');
+            mvccV2.classList.add('border-purple-500');
+            mvccBadge.innerText = 'Active V2 Creation';
+            mvccBadge.className = 'text-xs px-2.5 py-0.5 rounded-md clay-pill font-bold text-purple-500';
+
+            // Step 2: T2 requests read
+            setTimeout(() => {
+                // Locking side: Blocked!
+                lockT2.innerText = 'T2: Requesting Read (SELECT)... ⛔ BLOCKED!';
+                lockT2.classList.add('text-red-500');
+                lockNote.innerText = 'في نظام الأقفال: T2 معلقة وتنتظر في طابور القفل حتى تنهي T1 عمليتها! (Wait Time: 450ms...)';
+
+                // MVCC side: Instant read from V1!
+                mvccT2.innerText = 'T2: Requesting Read ➔ Reads Snapshot V1 instantly! 🚀';
+                mvccT2.classList.add('text-emerald-500');
+                mvccV1.classList.add('border-emerald-500', 'scale-105');
+                mvccNote.innerText = 'في محرك MVCC: T2 قرأت النسخة المؤكدة السابقة فوراً من الـ Undo Log دون انتظار! (Wait Time: 0ms)';
+            }, 1200);
+
+            // Step 3: T1 commits
+            setTimeout(() => {
+                lockT1.innerText = 'T1: COMMIT completed ➔ Releasing Lock';
+                lockDoor.innerText = '🔓';
+                lockDoor.classList.remove('border-red-500');
+                lockT2.innerText = 'T2: Finally unblocked! Read completed after delay.';
+                lockT2.classList.remove('text-red-500');
+
+                mvccT1.innerText = 'T1: COMMIT completed (V2 is now official)';
+                mvccV2.classList.add('bg-emerald-500/10');
+            }, 3200);
+        }
+
         // Initialize on DOM Load
         document.addEventListener('DOMContentLoaded', () => {
             initTheme();
             renderTimelineSteps();
             selectIsoLevel(2); // Default to Repeatable Read
             setWalMode('sync');
+            runLockSimulator();
         });
     </script>
 </body>

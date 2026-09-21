@@ -169,6 +169,24 @@
             color: var(--code-text);
         }
 
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn {
+            animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Mobile touch scroll improvements */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
         /* Animated Table Shutter Overlay */
         .table-shutter {
             transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
@@ -232,16 +250,56 @@
     </header>
 
     <!-- FLOATING TAB NAVIGATION BAR -->
-    <div class="sticky top-20 z-40 max-w-5xl mx-auto px-4 py-2">
-        <nav class="p-1.5 rounded-full clay-card flex items-center justify-center gap-1.5 overflow-x-auto text-xs font-bold no-scrollbar shadow-lg">
-            <a href="#intro" class="px-3.5 py-1.5 rounded-full clay-pill hover:text-purple-600 dark:hover:text-axLavender transition whitespace-nowrap" data-en="Transactions" data-ar="المعاملات">Transactions</a>
-            <a href="#acid" class="px-3.5 py-1.5 rounded-full clay-pill hover:text-purple-600 dark:hover:text-axLavender transition whitespace-nowrap" data-en="ACID" data-ar="خصائص ACID">ACID</a>
-            <a href="#concurrency" class="px-3.5 py-1.5 rounded-full clay-pill hover:text-purple-600 dark:hover:text-axLavender transition whitespace-nowrap" data-en="Concurrency" data-ar="التزامن">Concurrency</a>
-            <a href="#isolation" class="px-3.5 py-1.5 rounded-full clay-pill hover:text-purple-600 dark:hover:text-axLavender transition whitespace-nowrap" data-en="Isolation Levels" data-ar="مستويات العزل">Isolation Levels</a>
-            <a href="#locking-demo" class="px-3.5 py-1.5 rounded-full clay-btn-purple text-white transition whitespace-nowrap" data-en="2-Tx Concurrency Lab" data-ar="مختبر التزامن 2-Tx">2-Tx Concurrency Lab</a>
-            <a href="#matrices" class="px-3.5 py-1.5 rounded-full clay-pill hover:text-purple-600 dark:hover:text-axLavender transition whitespace-nowrap" data-en="Matrices & Trade-Offs" data-ar="المصفوفات والمقارنات">Matrices & Trade-Offs</a>
-            <a href="#engines" class="px-3.5 py-1.5 rounded-full clay-pill hover:text-purple-600 dark:hover:text-axLavender transition whitespace-nowrap" data-en="Engines" data-ar="المحركات">Engines</a>
-        </nav>
+    <div class="sticky top-16 sm:top-20 z-40 max-w-5xl mx-auto px-2 sm:px-4 py-2" id="floatingNavContainer">
+        
+        <!-- Desktop Tab Bar (md and up) -->
+        <div class="hidden md:flex items-center justify-between p-1.5 rounded-full clay-card shadow-lg gap-2">
+            <nav class="flex items-center gap-1 overflow-x-auto no-scrollbar text-xs font-bold" id="desktopNavTabs">
+                <button onclick="switchTab('intro')" id="tabBtn-intro" class="px-3.5 py-1.5 rounded-full clay-btn-purple text-white transition whitespace-nowrap" data-en="1. Transactions" data-ar="1. المعاملات">1. Transactions</button>
+                <button onclick="switchTab('acid')" id="tabBtn-acid" class="px-3.5 py-1.5 rounded-full clay-pill hover:text-purple-600 dark:hover:text-axLavender transition whitespace-nowrap" data-en="2. ACID" data-ar="2. خصائص ACID">2. ACID</button>
+                <button onclick="switchTab('concurrency')" id="tabBtn-concurrency" class="px-3.5 py-1.5 rounded-full clay-pill hover:text-purple-600 dark:hover:text-axLavender transition whitespace-nowrap" data-en="3. Concurrency" data-ar="3. التزامن">3. Concurrency</button>
+                <button onclick="switchTab('isolation')" id="tabBtn-isolation" class="px-3.5 py-1.5 rounded-full clay-pill hover:text-purple-600 dark:hover:text-axLavender transition whitespace-nowrap" data-en="4. Isolation" data-ar="4. مستويات العزل">4. Isolation</button>
+                <button onclick="switchTab('locking-demo')" id="tabBtn-locking-demo" class="px-3.5 py-1.5 rounded-full clay-pill hover:text-purple-600 dark:hover:text-axLavender transition whitespace-nowrap" data-en="5. 2-Tx Lab" data-ar="5. مختبر التزامن">5. 2-Tx Lab</button>
+                <button onclick="switchTab('matrices')" id="tabBtn-matrices" class="px-3.5 py-1.5 rounded-full clay-pill hover:text-purple-600 dark:hover:text-axLavender transition whitespace-nowrap" data-en="6. Matrices" data-ar="6. المصفوفات">6. Matrices</button>
+                <button onclick="switchTab('engines')" id="tabBtn-engines" class="px-3.5 py-1.5 rounded-full clay-pill hover:text-purple-600 dark:hover:text-axLavender transition whitespace-nowrap" data-en="7. Engines" data-ar="7. المحركات">7. Engines</button>
+            </nav>
+            <div class="border-l border-black/10 dark:border-white/10 pl-2 pr-1 shrink-0">
+                <button onclick="toggleViewMode()" id="viewModeToggleBtn" class="px-3 py-1.5 rounded-full clay-pill text-[11px] font-bold text-purple-600 dark:text-axLavender flex items-center gap-1.5 transition" title="Toggle Tab View vs All Modules View">
+                    <span id="viewModeIcon">📑</span>
+                    <span id="viewModeText" data-en="Tab Mode" data-ar="نمط التبويبات">Tab Mode</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Compact Controller (< md) -->
+        <div class="md:hidden space-y-1.5">
+            <!-- Top compact status pill with Prev/Next buttons -->
+            <div class="p-1.5 px-3 rounded-2xl clay-card flex items-center justify-between shadow-md text-xs">
+                <button onclick="prevModuleTab()" class="w-7 h-7 rounded-xl clay-pill flex items-center justify-center font-bold text-purple-600 dark:text-axLavender text-base active:scale-95" title="Previous Module">‹</button>
+                
+                <div class="flex flex-col items-center text-center px-1">
+                    <span class="text-[9px] font-mono font-bold text-purple-600 dark:text-axLavender uppercase tracking-wider" id="mobileModuleCounter">Module 1 of 7</span>
+                    <span class="text-[11px] font-black truncate max-w-[170px]" style="color: var(--clay-text-primary)" id="mobileModuleName">1. Transactions</span>
+                </div>
+
+                <div class="flex items-center gap-1">
+                    <button onclick="nextModuleTab()" class="w-7 h-7 rounded-xl clay-pill flex items-center justify-center font-bold text-purple-600 dark:text-axLavender text-base active:scale-95" title="Next Module">›</button>
+                    <button onclick="toggleViewMode()" id="mobViewModeBtn" class="w-7 h-7 rounded-xl clay-pill flex items-center justify-center text-xs text-purple-600 dark:text-axLavender font-bold" title="Toggle Tab / Full View">📑</button>
+                </div>
+            </div>
+
+            <!-- Horizontal Swipeable Pill Bar -->
+            <div class="flex items-center gap-1.5 overflow-x-auto py-1 px-1 no-scrollbar text-xs">
+                <button onclick="switchTab('intro')" id="mobTabBtn-intro" class="px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap clay-btn-purple text-white transition">1. Transactions</button>
+                <button onclick="switchTab('acid')" id="mobTabBtn-acid" class="px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap clay-pill text-slate-400 transition">2. ACID</button>
+                <button onclick="switchTab('concurrency')" id="mobTabBtn-concurrency" class="px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap clay-pill text-slate-400 transition">3. Concurrency</button>
+                <button onclick="switchTab('isolation')" id="mobTabBtn-isolation" class="px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap clay-pill text-slate-400 transition">4. Isolation</button>
+                <button onclick="switchTab('locking-demo')" id="mobTabBtn-locking-demo" class="px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap clay-pill text-slate-400 transition">5. 2-Tx Lab</button>
+                <button onclick="switchTab('matrices')" id="mobTabBtn-matrices" class="px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap clay-pill text-slate-400 transition">6. Matrices</button>
+                <button onclick="switchTab('engines')" id="mobTabBtn-engines" class="px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap clay-pill text-slate-400 transition">7. Engines</button>
+            </div>
+        </div>
+
     </div>
 
     <!-- MAIN CONTENT -->
@@ -266,15 +324,15 @@
                 An interactive visual reference to Database Transactions, ACID guarantees, Concurrency anomalies, Isolation levels, animated Row vs Table locking closures, and MVCC snapshot isolation.
             </p>
 
-            <div class="flex flex-wrap items-center justify-center gap-4">
-                <a href="#locking-demo" class="clay-btn-purple px-7 py-3 font-bold text-sm flex items-center gap-2">
-                    <span data-en="View Row vs Table Lock Animation" data-ar="مشاهدة محاكاة الأقفال">View Row vs Table Lock Animation</span>
+            <div class="flex flex-wrap items-center justify-center gap-3">
+                <button onclick="switchTab('locking-demo')" class="clay-btn-purple px-6 py-2.5 font-bold text-xs sm:text-sm flex items-center gap-2 transition active:scale-95">
                     <span>🔒</span>
-                </a>
-                <a href="#mvcc-demo" class="clay-btn-neutral px-7 py-3 font-bold text-sm flex items-center gap-2">
-                    <span data-en="View MVCC Animation" data-ar="مشاهدة محاكاة MVCC">View MVCC Animation</span>
-                    <span>🚀</span>
-                </a>
+                    <span data-en="Launch 2-Tx Concurrency Lab" data-ar="تشغيل مختبر التزامن 2-Tx">Launch 2-Tx Concurrency Lab</span>
+                </button>
+                <button onclick="switchTab('intro')" class="clay-btn-neutral px-6 py-2.5 font-bold text-xs sm:text-sm flex items-center gap-2 transition active:scale-95">
+                    <span>📖</span>
+                    <span data-en="Start Module 1: Transactions" data-ar="بدء الوحدة 1: المعاملات">Start Module 1: Transactions</span>
+                </button>
             </div>
 
         </section>
@@ -443,6 +501,16 @@
 <span class="text-purple-400">END</span> $$;</pre>
                 </div>
             </div>
+        
+            <!-- Module Bottom Pagination -->
+            <div class="module-nav-footer pt-6 mt-8 border-t border-black/10 dark:border-white/10 flex items-center justify-between flex-wrap gap-3">
+                <div></div>
+                <span class="text-xs font-mono font-bold text-slate-400">Module 01: Transactions</span>
+                <button onclick="switchTab('acid')" class="clay-btn-purple px-4 py-2 text-xs font-bold flex items-center gap-1.5 transition">
+            <span data-en="Next: Module 02: ACID" data-ar="التالي: الوحدة 2: ACID">Next: Module 02: ACID</span>
+            <span>→</span>
+        </button>
+            </div>
         </section>
 
         <!-- SECTION 2: ACID PROPERTIES -->
@@ -598,6 +666,19 @@
                     </div>
                 </div>
             </div>
+        
+            <!-- Module Bottom Pagination -->
+            <div class="module-nav-footer pt-6 mt-8 border-t border-black/10 dark:border-white/10 flex items-center justify-between flex-wrap gap-3">
+                <button onclick="switchTab('intro')" class="clay-btn-neutral px-4 py-2 text-xs font-bold flex items-center gap-1.5 transition">
+            <span>←</span>
+            <span data-en="Previous: Module 01: Transactions" data-ar="السابق: الوحدة 1: المعاملات">Previous: Module 01: Transactions</span>
+        </button>
+                <span class="text-xs font-mono font-bold text-slate-400">Module 02: ACID Guarantees</span>
+                <button onclick="switchTab('concurrency')" class="clay-btn-purple px-4 py-2 text-xs font-bold flex items-center gap-1.5 transition">
+            <span data-en="Next: Module 03: Concurrency" data-ar="التالي: الوحدة 3: التزامن">Next: Module 03: Concurrency</span>
+            <span>→</span>
+        </button>
+            </div>
         </section>
 
         <!-- SECTION 3: CONCURRENCY PROBLEMS TIMELINE -->
@@ -655,6 +736,19 @@
                     </div>
                     <div id="timelineProgressStatus" class="text-xs font-mono text-slate-400">Step 0 of 0</div>
                 </div>
+            </div>
+        
+            <!-- Module Bottom Pagination -->
+            <div class="module-nav-footer pt-6 mt-8 border-t border-black/10 dark:border-white/10 flex items-center justify-between flex-wrap gap-3">
+                <button onclick="switchTab('acid')" class="clay-btn-neutral px-4 py-2 text-xs font-bold flex items-center gap-1.5 transition">
+            <span>←</span>
+            <span data-en="Previous: Module 02: ACID" data-ar="السابق: الوحدة 2: ACID">Previous: Module 02: ACID</span>
+        </button>
+                <span class="text-xs font-mono font-bold text-slate-400">Module 03: Concurrency Anomalies</span>
+                <button onclick="switchTab('isolation')" class="clay-btn-purple px-4 py-2 text-xs font-bold flex items-center gap-1.5 transition">
+            <span data-en="Next: Module 04: Isolation Levels" data-ar="التالي: الوحدة 4: مستويات العزل">Next: Module 04: Isolation Levels</span>
+            <span>→</span>
+        </button>
             </div>
         </section>
 
@@ -722,6 +816,19 @@
                         </table>
                     </div>
                 </div>
+            </div>
+        
+            <!-- Module Bottom Pagination -->
+            <div class="module-nav-footer pt-6 mt-8 border-t border-black/10 dark:border-white/10 flex items-center justify-between flex-wrap gap-3">
+                <button onclick="switchTab('concurrency')" class="clay-btn-neutral px-4 py-2 text-xs font-bold flex items-center gap-1.5 transition">
+            <span>←</span>
+            <span data-en="Previous: Module 03: Concurrency" data-ar="السابق: الوحدة 3: التزامن">Previous: Module 03: Concurrency</span>
+        </button>
+                <span class="text-xs font-mono font-bold text-slate-400">Module 04: Isolation Levels</span>
+                <button onclick="switchTab('locking-demo')" class="clay-btn-purple px-4 py-2 text-xs font-bold flex items-center gap-1.5 transition">
+            <span data-en="Next: Module 05: 2-Tx Lab" data-ar="التالي: الوحدة 5: مختبر التزامن">Next: Module 05: 2-Tx Lab</span>
+            <span>→</span>
+        </button>
             </div>
         </section>
 
@@ -1063,6 +1170,19 @@
                 </div>
 
             </div>
+        
+            <!-- Module Bottom Pagination -->
+            <div class="module-nav-footer pt-6 mt-8 border-t border-black/10 dark:border-white/10 flex items-center justify-between flex-wrap gap-3">
+                <button onclick="switchTab('isolation')" class="clay-btn-neutral px-4 py-2 text-xs font-bold flex items-center gap-1.5 transition">
+            <span>←</span>
+            <span data-en="Previous: Module 04: Isolation Levels" data-ar="السابق: الوحدة 4: مستويات العزل">Previous: Module 04: Isolation Levels</span>
+        </button>
+                <span class="text-xs font-mono font-bold text-slate-400">Module 05: Two-Transaction Concurrency Lab</span>
+                <button onclick="switchTab('matrices')" class="clay-btn-purple px-4 py-2 text-xs font-bold flex items-center gap-1.5 transition">
+            <span data-en="Next: Module 06: Matrices" data-ar="التالي: الوحدة 6: المصفوفات">Next: Module 06: Matrices</span>
+            <span>→</span>
+        </button>
+            </div>
         </section>
 
         <!-- SECTION 6: ARCHITECTURAL MATRICES & COMPARISON -->
@@ -1196,6 +1316,19 @@
                     </table>
                 </div>
             </div>
+        
+            <!-- Module Bottom Pagination -->
+            <div class="module-nav-footer pt-6 mt-8 border-t border-black/10 dark:border-white/10 flex items-center justify-between flex-wrap gap-3">
+                <button onclick="switchTab('locking-demo')" class="clay-btn-neutral px-4 py-2 text-xs font-bold flex items-center gap-1.5 transition">
+            <span>←</span>
+            <span data-en="Previous: Module 05: 2-Tx Lab" data-ar="السابق: الوحدة 5: مختبر التزامن">Previous: Module 05: 2-Tx Lab</span>
+        </button>
+                <span class="text-xs font-mono font-bold text-slate-400">Module 06: Lock Matrices & Trade-Offs</span>
+                <button onclick="switchTab('engines')" class="clay-btn-purple px-4 py-2 text-xs font-bold flex items-center gap-1.5 transition">
+            <span data-en="Next: Module 07: Engines" data-ar="التالي: الوحدة 7: المحركات">Next: Module 07: Engines</span>
+            <span>→</span>
+        </button>
+            </div>
         </section>
 
         <!-- SECTION 7: STORAGE ENGINES SHOWDOWN -->
@@ -1276,6 +1409,19 @@
                 </div>
                 <div class="p-4 rounded-2xl clay-inset font-mono text-xs space-y-2" id="walExplanationBox"></div>
             </div>
+        
+            <!-- Module Bottom Pagination -->
+            <div class="module-nav-footer pt-6 mt-8 border-t border-black/10 dark:border-white/10 flex items-center justify-between flex-wrap gap-3">
+                <button onclick="switchTab('matrices')" class="clay-btn-neutral px-4 py-2 text-xs font-bold flex items-center gap-1.5 transition">
+            <span>←</span>
+            <span data-en="Previous: Module 06: Matrices" data-ar="السابق: الوحدة 6: المصفوفات">Previous: Module 06: Matrices</span>
+        </button>
+                <span class="text-xs font-mono font-bold text-slate-400">Module 07: Storage Engines Showdown</span>
+                <button onclick="switchTab('intro')" class="clay-btn-purple px-4 py-2 text-xs font-bold flex items-center gap-1.5 transition">
+            <span data-en="Next: Module 01: Transactions" data-ar="التالي: الوحدة 1: المعاملات">Next: Module 01: Transactions</span>
+            <span>→</span>
+        </button>
+            </div>
         </section>
 
     </main>
@@ -1299,7 +1445,161 @@
 
     <!-- SCRIPT LOGIC -->
     <script>
-        // Theme Toggle (Dark & Light Mode)
+        
+        // ==========================================
+        // TABBED SHOW / HIDE CONTROLLER & RESPONSIVE NAVIGATION
+        // ==========================================
+        const moduleTabs = [
+            { id: 'intro', num: 1, nameEn: '1. Transactions', nameAr: '1. المعاملات' },
+            { id: 'acid', num: 2, nameEn: '2. ACID Guarantees', nameAr: '2. خصائص ACID' },
+            { id: 'concurrency', num: 3, nameEn: '3. Concurrency Anomalies', nameAr: '3. مشاكل التزامن' },
+            { id: 'isolation', num: 4, nameEn: '4. Isolation Levels', nameAr: '4. مستويات العزل' },
+            { id: 'locking-demo', num: 5, nameEn: '5. 2-Tx Concurrency Lab', nameAr: '5. مختبر التزامن 2-Tx' },
+            { id: 'matrices', num: 6, nameEn: '6. Matrices & Trade-Offs', nameAr: '6. المصفوفات والمقارنات' },
+            { id: 'engines', num: 7, nameEn: '7. Storage Engines', nameAr: '7. محركات التخزين' }
+        ];
+
+        let currentTabId = 'intro';
+        let pageViewMode = 'tab'; // 'tab' (show/hide single) or 'all' (continuous scroll)
+
+        function switchTab(tabId, updateHash = true) {
+            const found = moduleTabs.find(m => m.id === tabId);
+            if (!found) tabId = 'intro';
+            currentTabId = tabId;
+
+            const hero = document.getElementById('hero');
+
+            if (pageViewMode === 'tab') {
+                // Show only active tab, hide others
+                moduleTabs.forEach(m => {
+                    const el = document.getElementById(m.id);
+                    if (el) {
+                        if (m.id === tabId) {
+                            el.classList.remove('hidden');
+                            el.classList.add('block', 'animate-fadeIn');
+                        } else {
+                            el.classList.add('hidden');
+                            el.classList.remove('block', 'animate-fadeIn');
+                        }
+                    }
+                });
+
+                // In tab mode, show hero only on intro tab or hide it when moving to deeper modules
+                if (hero) {
+                    if (tabId === 'intro') {
+                        hero.classList.remove('hidden');
+                    } else {
+                        hero.classList.add('hidden');
+                    }
+                }
+            } else {
+                // 'all' mode: all visible
+                moduleTabs.forEach(m => {
+                    const el = document.getElementById(m.id);
+                    if (el) {
+                        el.classList.remove('hidden');
+                        el.classList.add('block');
+                    }
+                });
+                if (hero) hero.classList.remove('hidden');
+            }
+
+            // Update Tab UI highlights
+            updateNavTabsUI();
+
+            if (updateHash) {
+                history.replaceState(null, '', `#${tabId}`);
+            }
+
+            // If switching tabs, smooth scroll up to navigation bar
+            const nav = document.getElementById('floatingNavContainer');
+            if (nav && updateHash) {
+                const navRect = nav.getBoundingClientRect();
+                window.scrollTo({
+                    top: window.pageYOffset + navRect.top - 70,
+                    behavior: 'smooth'
+                });
+            }
+        }
+
+        function updateNavTabsUI() {
+            const mod = moduleTabs.find(m => m.id === currentTabId) || moduleTabs[0];
+            const name = (currentLang === 'ar') ? mod.nameAr : mod.nameEn;
+
+            // Update Mobile status
+            const mobCounter = document.getElementById('mobileModuleCounter');
+            const mobName = document.getElementById('mobileModuleName');
+            if (mobCounter) mobCounter.innerText = `Module ${mod.num} of 7`;
+            if (mobName) mobName.innerText = name;
+
+            // Update Desktop buttons
+            moduleTabs.forEach(m => {
+                const deskBtn = document.getElementById(`tabBtn-${m.id}`);
+                const mobBtn = document.getElementById(`mobTabBtn-${m.id}`);
+
+                if (deskBtn) {
+                    if (pageViewMode === 'all') {
+                        deskBtn.className = 'px-3.5 py-1.5 rounded-full clay-pill hover:text-purple-600 dark:hover:text-axLavender transition whitespace-nowrap';
+                    } else if (m.id === currentTabId) {
+                        deskBtn.className = 'px-3.5 py-1.5 rounded-full clay-btn-purple text-white transition whitespace-nowrap shadow-sm';
+                    } else {
+                        deskBtn.className = 'px-3.5 py-1.5 rounded-full clay-pill hover:text-purple-600 dark:hover:text-axLavender transition whitespace-nowrap';
+                    }
+                }
+
+                if (mobBtn) {
+                    if (pageViewMode === 'all') {
+                        mobBtn.className = 'px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap clay-pill text-slate-400 transition';
+                    } else if (m.id === currentTabId) {
+                        mobBtn.className = 'px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap clay-btn-purple text-white transition';
+                    } else {
+                        mobBtn.className = 'px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap clay-pill text-slate-400 transition';
+                    }
+                }
+            });
+
+            // Update View Mode toggle icon/text
+            const icon = document.getElementById('viewModeIcon');
+            const text = document.getElementById('viewModeText');
+            const mobBtn = document.getElementById('mobViewModeBtn');
+
+            if (pageViewMode === 'tab') {
+                if (icon) icon.innerText = '📑';
+                if (text) text.innerText = (currentLang === 'ar') ? 'نمط التبويبات' : 'Tab Mode';
+                if (mobBtn) mobBtn.innerText = '📑';
+            } else {
+                if (icon) icon.innerText = '📜';
+                if (text) text.innerText = (currentLang === 'ar') ? 'عرض الكل' : 'View All';
+                if (mobBtn) mobBtn.innerText = '📜';
+            }
+        }
+
+        function nextModuleTab() {
+            const idx = moduleTabs.findIndex(m => m.id === currentTabId);
+            const nextIdx = (idx + 1) % moduleTabs.length;
+            switchTab(moduleTabs[nextIdx].id);
+        }
+
+        function prevModuleTab() {
+            const idx = moduleTabs.findIndex(m => m.id === currentTabId);
+            const prevIdx = (idx - 1 + moduleTabs.length) % moduleTabs.length;
+            switchTab(moduleTabs[prevIdx].id);
+        }
+
+        function toggleViewMode() {
+            pageViewMode = (pageViewMode === 'tab') ? 'all' : 'tab';
+            switchTab(currentTabId, false);
+        }
+
+        // URL hash listener for direct navigation & bookmarks
+        window.addEventListener('hashchange', () => {
+            const hash = window.location.hash.replace('#', '');
+            if (moduleTabs.some(m => m.id === hash)) {
+                switchTab(hash, false);
+            }
+        });
+
+// Theme Toggle (Dark & Light Mode)
         function initTheme() {
             const savedTheme = localStorage.getItem('theme');
             const isDark = savedTheme ? savedTheme === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -1343,6 +1643,9 @@
 
             if (typeof renderLab === 'function') {
                 renderLab();
+            }
+            if (typeof updateNavTabsUI === 'function') {
+                updateNavTabsUI();
             }
         }
 
@@ -1782,6 +2085,15 @@
                 }
             });
             resetLab();
+
+            // Initialize tab based on URL hash or default to 'intro'
+            const initHash = window.location.hash.replace('#', '');
+            if (moduleTabs.some(m => m.id === initHash)) {
+                switchTab(initHash, false);
+            } else {
+                switchTab('intro', false);
+            }
+
         }
 
         function setLabScenario(scen) {
@@ -1793,6 +2105,15 @@
                 }
             });
             resetLab();
+
+            // Initialize tab based on URL hash or default to 'intro'
+            const initHash = window.location.hash.replace('#', '');
+            if (moduleTabs.some(m => m.id === initHash)) {
+                switchTab(initHash, false);
+            } else {
+                switchTab('intro', false);
+            }
+
         }
 
         function toggleLabAutoPlay() {
@@ -2399,6 +2720,15 @@
             selectIsoLevel(2);
             setWalMode('sync');
             resetLab();
+
+            // Initialize tab based on URL hash or default to 'intro'
+            const initHash = window.location.hash.replace('#', '');
+            if (moduleTabs.some(m => m.id === initHash)) {
+                switchTab(initHash, false);
+            } else {
+                switchTab('intro', false);
+            }
+
         });
     </script>
 </body>
